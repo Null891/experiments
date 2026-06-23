@@ -1,7 +1,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#04050a}
 body{font-family:"Space Grotesk","Segoe UI",system-ui,sans-serif;color:#e8ecf5;cursor:default}
-:root{--accent:#7af0ff}
+:root{--accent:#c69a5a}
 
 #scene{position:fixed;inset:0;display:block}
 
@@ -37,15 +37,15 @@ body.locked #crosshair{opacity:.9}
 #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-align:center;z-index:50;overflow:hidden;background:#04050a}
 #splash::before{content:"";position:absolute;inset:-40%;z-index:-1;
-  background:conic-gradient(from 0deg,#0b1f3a,#1a0f3a,#091a2e,#2a103a,#0b1f3a);
-  filter:blur(90px);opacity:.6;animation:spin 24s linear infinite}
+  background:conic-gradient(from 0deg,#2a2114,#3a2c18,#241d12,#3a2a1a,#2a2114);
+  filter:blur(90px);opacity:.7;animation:spin 28s linear infinite}
 #splash::after{content:"";position:absolute;inset:0;z-index:-1;
   background:radial-gradient(circle at 50% 38%, transparent 30%, #04050a 72%)}
 @keyframes spin{to{transform:rotate(360deg)}}
-#splash h1{font-size:clamp(40px,9vw,104px);font-weight:700;letter-spacing:6px;line-height:1;
-  background:linear-gradient(100deg,#7af0ff,#b58bff 40%,#ff7ab8 70%,#ffd86b);
+#splash h1{font-size:clamp(40px,9vw,104px);font-weight:700;letter-spacing:8px;line-height:1;
+  background:linear-gradient(100deg,#f3e9d4,#d8b074 40%,#c69a5a 70%,#f0e2c2);
   background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
-  animation:shine 6s linear infinite;filter:drop-shadow(0 0 40px rgba(140,160,255,.3))}
+  animation:shine 7s linear infinite;filter:drop-shadow(0 0 40px rgba(200,160,90,.25))}
 @keyframes shine{to{background-position:200% center}}
 #splash .sub{margin-top:6px;font-size:13px;letter-spacing:5px;color:#8fa0c8;text-transform:uppercase}
 #splash p{margin-top:22px;opacity:.85;max-width:640px;line-height:1.6;font-family:"Segoe UI",sans-serif}

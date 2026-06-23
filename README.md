@@ -1,11 +1,15 @@
 # 🏛 THE MANSION
 
-A walkable **3D mansion** where every door opens onto a different *experimental website* — pages
-that tear in half, shatter into glass, burn into ash, dissolve into sand, inflate until they pop,
-fight back, flee from your cursor, race you around the world, judge your mouse control, or fold
-through the fourth dimension.
+A walkable **3D building** — a modern, minimalist, Italian-inflected gallery (travertine floors,
+plaster walls, walnut accents, brushed brass, daylight windows) — where you physically walk through
+doorways into **real enclosed rooms**, and each room's display opens a different *experimental
+website*: pages that tear in half, shatter into glass, burn into ash, dissolve into sand, inflate
+until they pop, fight back, flee from your cursor, race you around the world, judge your mouse
+control, or fold through the fourth dimension.
 
-**75 rooms in total:** 74 hand-built experiences + a cinematic finale, *The Architect's Chamber*.
+**75 rooms in total:** 74 hand-built experiences off the galleries + a grand cinematic finale,
+*The Architect's Chamber*. Movement has real wall collision; the rooms are actual architecture
+(image-based lighting via Three's `RoomEnvironment`, ACES tone-mapping, subtle bloom).
 
 ![rooms](https://img.shields.io/badge/rooms-75-7af0ff) ![built with](https://img.shields.io/badge/three.js-r160-a06bff) ![deps](https://img.shields.io/badge/runtime%20deps-0-1dd1a1)
 
@@ -37,9 +41,10 @@ Then open **http://localhost:8080** and click **Enter the Mansion**.
 | Mouse | Look around (click the scene to capture the cursor) |
 | `Shift` | Sprint |
 | `E` or `Click` | Enter the room you're standing in front of |
-| Click the **minimap** | Teleport to any room |
+| `Tab` | Open the **room directory** — search all 75 rooms and jump to any one |
+| Click the **minimap** | Teleport to the nearest room |
 | `M` | Toggle minimap |
-| `Esc` | Release cursor / leave a room |
+| `Esc` | Release cursor / close a panel / leave a room |
 
 Walk forward through the grid of portals; the glowing **gold dais at the very back** is the finale.
 Your explored count is tracked, and the finale reacts to how many rooms you actually opened.
@@ -53,7 +58,8 @@ index.html            the 3D mansion hub (Three.js, first-person, bloom)
 serve.js              tiny static server (no deps)
 css/hub.css           hub styling
 js/registry.js        the catalog of all 75 rooms
-js/hub.js             the mansion scene, navigation, portals, minimap, finale dais
+js/hub.js             the building: procedural floor plan, PBR materials, IBL, wall
+                      collision, gallery navigation, minimap, directory, finale chamber
 experiences/          one self-contained HTML file per room
   _shared.css/.js     helpers + the fake-article generator the effects decorate
   finale.html         The Architect's Chamber (the ending)
