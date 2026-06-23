@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Tearable DOM</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#0b0d12}
+  #code{position:absolute;inset:0;margin:0;padding:60px 40px;overflow:hidden;
+    font-family:"Consolas",monospace;font-size:12.5px;line-height:1.55;color:#8fb8ff;
+    background:#0b0d12;white-space:pre-wrap;word-break:break-word}
+  #code .tag{color:#ff7ab8}#code .atr{color:#ffd479}#code .str{color:#9af0c0}#code .txt{color:#c8d0e0}
+  .half{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;background:var(--paper);
+    will-change:transform,clip-path;transform-origin:center;box-shadow:0 0 0 rgba(0,0,0,0)}
+  .half .wrap{width:100vw}
+  .seam{position:absolute;top:0;bottom:0;width:3px;pointer-events:none;mix-blend-mode:screen;
+    background:linear-gradient(transparent,rgba(255,255,255,.6),transparent)}
+  #grip{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:20;cursor:grab;
+    font-family:"Segoe UI",sans-serif;font-weight:700;background:#14161d;color:#fff;
+    padding:9px 18px;border-radius:30px;box-shadow:0 6px 24px rgba(0,0,0,.4);user-select:none}
+  #grip:active{cursor:grabbing}
+  #done{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;display:none;
+    text-align:center;font-family:"Segoe UI",sans-serif;color:#cfe0ff}
+  #done .btn{margin-top:14px}
+</style></head>
+<body>
+  <pre id="code"></pre>
+  <div class="half" id="left"><div class="wrap"></div></div>
+  <div class="half" id="right"><div class="wrap"></div></div>
+  <div class="seam" id="seam"></div>
+  <div id="grip">✂ &nbsp;grab &amp; drag down to rip the page</div>
+  <div id="done"><h2>The DOM is exposed.</h2>
+    <div>You tore through the rendered page into the raw markup beneath it.</div>
+    <a class="btn" id="reset" href="#">Stitch it back together</a></div>
+  <div class="hint">Drag the <b>✂</b> handle downward to tear the page in half</div>
+  <script src="_shared.js"></script>
+  <script>
+    const accent = "#c98b3a";
+    // build identical article into both halves
+    const article = (el)=>MX.fakeArticle(el,{accent,brand:"THE TEARABLE TIMES",title:"This Page Was Only Ever a Costume",
+      lede:"Pull the seam apart and you will find no soul underneath — only tags, attributes, and the quiet machinery of markup."});
+    article(document.querySelector("#left .wrap"));
+    article(document.querySelector("#right .wrap"));
+
+    // raw "source" layer
+    function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function highlight(s){return esc(s)
+      .replace(/(&lt;\/?[a-zA-Z0-9]+)/g,'<span class="tag">$1</span>')
+      .replace(/([a-zA-Z-]+)=(&quot;|")/g,'<span class="atr">$1</span>=$2')
+      .replace(/(&quot;[^&]*?&quot;)/g,'<span class="str">$1</span>');}
+    const src = document.querySelector("#left .wrap").innerHTML;
+    let dump = "";
+    for(let i=0;i<3;i++) dump += "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>The 100-Room Mansion · Tearable DOM</title>\n</head>\n<body>\n  <main class=\"wrap\">\n"+src+"\n  </main>\n</body>\n</html>\n\n";
+    document.getElementById("code").innerHTML = highlight(dump);
+
+    // jagged tear line (percent points down the page)
+    const pts=[]; for(let y=0;y<=100;y+=3.5){ pts.push({x:50+(Math.random()*2-1)*5, y}); }
+    const leftPoly  = `polygon(0% 0%, ${pts.map(p=>p.x+"% "+p.y+"%").join(", ")}, 0% 100%)`;
+    const rightPoly = `polygon(100% 0%, ${pts.map(p=>p.x+"% "+p.y+"%").join(", ")}, 100% 100%)`;
+    const L=document.getElementById("left"), R=document.getElementById("right"), seam=document.getElementById("seam");
+    L.style.clipPath=leftPoly; R.style.clipPath=rightPoly;
+
+    let prog=0, dragging=false, startY=0, startProg=0;
+    function render(){
+      const sh=prog*42; // vw shift
+      L.style.transform=`translateX(-${sh}vw) rotate(${-prog*2.5}deg)`;
+      R.style.transform=`translateX(${sh}vw) rotate(${prog*2.5}deg)`;
+      const shadow=`drop-shadow(${prog*-12}px 4px 10px rgba(0,0,0,.5))`;
+      L.style.filter=shadow; R.style.filter=`drop-shadow(${prog*12}px 4px 10px rgba(0,0,0,.5))`;
+      seam.style.left="50%"; seam.style.opacity=String(1-prog);
+      seam.style.transform=`scaleX(${1+prog*8})`;
+      if(prog>0.92){ document.getElementById("done").style.display="block"; document.getElementById("grip").style.opacity=.2; }
+      else document.getElementById("done").style.display="none";
+    }
+    function setProg(p){ prog=Math.max(0,Math.min(1,p)); render(); }
+    const grip=document.getElementById("grip");
+    function down(e){dragging=true; startY=(e.touches?e.touches[0].clientY:e.clientY); startProg=prog; e.preventDefault();}
+    function move(e){ if(!dragging)return; const y=(e.touches?e.touches[0].clientY:e.clientY);
+      setProg(startProg+(y-startY)/(innerHeight*0.8)); }
+    function up(){dragging=false;}
+    grip.addEventListener("mousedown",down); addEventListener("mousemove",move); addEventListener("mouseup",up);
+    grip.addEventListener("touchstart",down,{passive:false}); addEventListener("touchmove",move,{passive:false}); addEventListener("touchend",up);
+    // also allow dragging anywhere on the page
+    document.body.addEventListener("mousedown",e=>{ if(e.target.closest("#done"))return; down(e); });
+    document.getElementById("reset").addEventListener("click",e=>{e.preventDefault(); const t=setInterval(()=>{ setProg(prog-0.04); if(prog<=0){clearInterval(t);} },16);});
+    render();
+  </script>
+</body></html>

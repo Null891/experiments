@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Base64 URL</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d1117;color:#cfe;font-family:"Segoe UI",sans-serif;overflow:hidden}
+  #wrap{height:100%;display:flex;flex-direction:column}
+  #fakebar{display:flex;align-items:center;gap:8px;background:#21262d;padding:8px 12px;border-bottom:1px solid #30363d}
+  #fakebar .dot{width:12px;height:12px;border-radius:50%}
+  #addr{flex:1;background:#0d1117;border:1px solid #30363d;border-radius:18px;padding:8px 14px;font-family:"Consolas",monospace;
+    font-size:12px;color:#7ee787;white-space:nowrap;overflow-x:auto;display:flex;align-items:center}
+  #go{background:#238636;border:0;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer}
+  #body{flex:1;display:grid;grid-template-columns:1fr 1fr}
+  #src{padding:14px;overflow:auto;border-right:1px solid #30363d;font-family:"Consolas",monospace;font-size:12px;color:#9ab}
+  #out{position:relative}
+  #out iframe{width:100%;height:100%;border:0;background:#fff}
+  #note{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.7);padding:5px 10px;border-radius:6px;font-size:11px;z-index:2}
+  h4{margin:6px 0;color:#cfe}
+  .hint{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font-size:12px;color:#789;background:rgba(13,17,23,.9);padding:6px 12px;border-radius:20px}
+</style></head>
+<body>
+  <div id="wrap">
+    <div id="fakebar">
+      <span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span>
+      <div id="addr"></div><button id="go">Decode &amp; Run ▶</button>
+    </div>
+    <div id="body">
+      <div id="src"><h4>This site has NO server. The whole page lives in that URL ↑</h4><div id="srctext"></div></div>
+      <div id="out"><div id="note">rendered from the data: URL on the left</div><iframe id="frame"></iframe></div>
+    </div>
+  </div>
+  <div class="hint">There is no backend. The complete HTML/CSS/JS is Base64-encoded directly in the address bar.</div>
+  <script>
+  // a tiny but complete self-contained site
+  const SITE=`<!doctype html><html><head><meta charset="utf-8"><style>
+body{font-family:system-ui,sans-serif;margin:0;background:linear-gradient(135deg,#1d2671,#c33764);color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+h1{font-size:42px;margin:0}button{margin-top:18px;background:#fff;color:#222;border:0;padding:12px 24px;border-radius:30px;font-weight:800;cursor:pointer}
+#c{font-size:60px;margin:10px}</style></head><body>
+<h1>Hello from inside the URL</h1><p>This entire page was decoded from Base64. Click below.</p>
+<div id="c">0</div><button onclick="document.getElementById('c').textContent=++window.n||(window.n=1)">click me</button>
+</body></html>`;
+  const b64=btoa(unescape(encodeURIComponent(SITE)));
+  const dataUrl="data:text/html;base64,"+b64;
+  document.getElementById("addr").textContent=dataUrl;
+  // show source nicely
+  document.getElementById("srctext").innerHTML="<div style='color:#7ee787;word-break:break-all;line-height:1.5'>"+
+    dataUrl.slice(0,1400)+" <span style='color:#f85149'>…("+dataUrl.length+" chars total)</span></div>"+
+    "<h4 style='margin-top:14px'>decodes to:</h4><pre style='white-space:pre-wrap;word-break:break-word;color:#9ab'>"+
+    SITE.replace(/</g,"&lt;")+"</pre>";
+  function run(){document.getElementById("frame").src=dataUrl;}
+  document.getElementById("go").onclick=run;run();
+  </script>
+</body></html>

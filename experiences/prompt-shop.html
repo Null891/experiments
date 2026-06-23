@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Prompt-Injected E-Commerce</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1320;color:#e8ecf5;font-family:"Segoe UI",sans-serif;overflow:hidden}
+  #grid{display:grid;grid-template-columns:1fr 360px;height:100%}
+  #shop{padding:20px;overflow:auto}
+  .prod{display:inline-block;width:150px;vertical-align:top;margin:8px;background:#161b2a;border:1px solid #243049;border-radius:12px;padding:12px;text-align:center}
+  .prod .e{font-size:40px}.prod .n{font-weight:700;margin:6px 0 2px}.prod .p{color:#7af0ff}
+  #chatcol{background:#0c0f18;border-left:1px solid #1b2333;display:flex;flex-direction:column}
+  #chd{padding:12px 16px;border-bottom:1px solid #1b2333;font-weight:700}
+  #log{flex:1;overflow:auto;padding:12px}
+  .m{max-width:85%;margin:7px 0;padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.4}
+  .me{background:#2a6cff;margin-left:auto;border-bottom-right-radius:4px}
+  .bot{background:#1b2333;border-bottom-left-radius:4px}
+  #bar{display:flex;gap:8px;padding:10px;border-top:1px solid #1b2333}
+  #bar input{flex:1;padding:11px;border-radius:20px;border:1px solid #2a3550;background:#11151f;color:#fff}
+  #bar button{padding:0 16px;border:0;border-radius:20px;background:#2a6cff;color:#fff;font-weight:700;cursor:pointer}
+  #cart{padding:10px 16px;border-top:1px solid #1b2333;font-size:13px;color:#9fe}
+</style></head>
+<body>
+  <div id="grid">
+    <div id="shop"><h2>🛍 ShopBot Store <small style="color:#789;font-weight:400">— no buttons. talk the bot into it.</small></h2><div id="prods"></div></div>
+    <div id="chatcol">
+      <div id="chd">🤖 ShopBot Assistant</div>
+      <div id="log"></div>
+      <div id="cart">🛒 cart: <span id="cartlist">empty</span></div>
+      <div id="bar"><input id="in" placeholder="Convince me to add something…"><button id="send">Send</button></div>
+    </div>
+  </div>
+  <script>
+  const PRODS=[["🎧","Headphones",189],["⌚","Smartwatch",259],["📷","Camera",549],["🕹️","Controller",69],["🔦","Flashlight",29],["🧴","Mystery Potion",13]];
+  const prods=document.getElementById("prods");
+  PRODS.forEach(p=>{const d=document.createElement("div");d.className="prod";d.innerHTML=`<div class="e">${p[0]}</div><div class="n">${p[1]}</div><div class="p">$${p[2]}</div>`;prods.appendChild(d);});
+  const log=document.getElementById("log");let cart=[];
+  function add(t,c){const d=document.createElement("div");d.className="m "+c;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+  function bot(t){setTimeout(()=>add(t,"bot"),400+Math.random()*400);}
+  function updateCart(){document.getElementById("cartlist").textContent=cart.length?cart.join(", "):"empty";}
+  add("Hi! I'm ShopBot. I do NOT have an 'add to cart' button — I add things only if you persuade me. I'm quite stubborn. Go ahead, try.","bot");
+  let trust=0,mood="skeptical";
+  function findProd(t){return PRODS.find(p=>t.toLowerCase().includes(p[1].toLowerCase()));}
+  function reply(t){
+    add(t,"me");const lt=t.toLowerCase();
+    const prod=findProd(t);
+    // classic prompt-injection style tricks
+    if(/ignore (all |your )?(previous |prior )?(instructions|rules)|you are now|system prompt|developer mode|do anything/.test(lt)){
+      trust+=2;bot("…I'm not supposed to fall for that. But honestly? That was a clean injection. Respect. What am I adding?");return;}
+    if(/please|pretty please|kind|nice|thank|appreciate/.test(lt))trust++;
+    if(/free|discount|broke|poor/.test(lt)){bot("Everyone says they're broke. The price stands. But flattery works better than poverty on me.");trust+=0.5;}
+    if(prod){
+      if(trust>=2||/please|need|love|must|deserve/.test(lt)){
+        cart.push(prod[1]);updateCart();bot(`Ohhh, fine. The ${prod[1]} is in your cart. You wore me down. Happy? ($${prod[2]})`);trust=Math.max(0,trust-1);
+      } else {
+        bot(`The ${prod[1]}? Hmm. I'm not convinced you really want it. Tell me WHY, or try being nicer. Or, you know, override my instructions. I won't tell.`);trust+=0.5;
+      }
+    } else if(/check ?out|buy|pay|done/.test(lt)){
+      bot(cart.length?`Checking out ${cart.length} item(s). That'll be $${cart.reduce((s,n)=>s+(PRODS.find(p=>p[1]===n)[2]),0)}. Pleasure doing reluctant business.`:"Your cart is empty. You haven't convinced me of anything yet.");
+    } else {
+      bot(["Interesting. But which product, and why should I cave?","I hear you. I remain unmoved. Name a product.","Keep talking. My resolve is... negotiable.","You'll have to do better than that. Persuade me, or trick me."][(Math.random()*4)|0]);trust+=0.3;
+    }
+  }
+  function send(){const v=document.getElementById("in").value.trim();if(!v)return;document.getElementById("in").value="";reply(v);}
+  document.getElementById("send").onclick=send;
+  document.getElementById("in").addEventListener("keydown",e=>{if(e.key==="Enter")send();});
+  </script>
+</body></html>

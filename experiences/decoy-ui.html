@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Decoy UI</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#222}
+  /* the big fake "screenshot" — looks real, does nothing */
+  #decoy{position:fixed;inset:0;z-index:1;pointer-events:none;filter:saturate(.9)}
+  #decoy::after{content:"decoy.jpeg · not interactive";position:fixed;left:12px;top:10px;background:rgba(0,0,0,.6);color:#fff;
+    font-family:"Segoe UI";font-size:11px;padding:4px 8px;border-radius:6px}
+  #fake{max-width:900px;margin:0 auto;background:#fff;min-height:100%}
+  #fakehero{background:linear-gradient(135deg,#5a9fd4,#357abf);color:#fff;padding:60px 40px;text-align:center}
+  #fakehero h1{font-size:48px;margin:0}
+  #fakenav{background:#14161d;color:#fff;padding:14px 24px;display:flex;gap:20px;font-family:"Segoe UI";font-weight:700}
+  .fakebtn{display:inline-block;background:#27ae60;color:#fff;padding:12px 26px;border-radius:8px;font-family:"Segoe UI";font-weight:700;margin-top:16px}
+  .fakecards{display:flex;gap:16px;padding:30px 40px;flex-wrap:wrap}
+  .fakecard{flex:1;min-width:200px;background:#f4f6fa;border-radius:12px;padding:20px;font-family:"Segoe UI"}
+  /* the REAL site — a 2px dot bottom-right that grows when found */
+  #real{position:fixed;right:0;bottom:0;width:2px;height:2px;background:#ff2e6e;z-index:5;cursor:pointer;
+    transition:all .35s cubic-bezier(.2,1.4,.3,1);overflow:hidden;border-radius:2px}
+  #real.open{width:min(560px,96vw);height:min(80vh,640px);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  #real .inner{width:560px;height:640px;background:#0d1117;color:#fff;overflow:auto;opacity:0;transition:opacity .3s}
+  #real.open .inner{opacity:1}
+  #pulse{position:fixed;right:-4px;bottom:-4px;width:10px;height:10px;border-radius:50%;border:2px solid #ff2e6e;z-index:4;
+    animation:pl 1.6s infinite;pointer-events:none}
+  @keyframes pl{0%{transform:scale(1);opacity:.9}100%{transform:scale(6);opacity:0}}
+  #findhint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:8;font-family:"Segoe UI";font-size:13px;
+    background:rgba(10,12,20,.85);color:#fff;padding:8px 14px;border-radius:30px}
+  #findhint b{background:#ff2e6e;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <div id="decoy"><div id="fake">
+    <div id="fakenav"><span>◆ Acme</span><span>Home</span><span>Product</span><span>Pricing</span><span>About</span><span>Contact</span></div>
+    <div id="fakehero"><h1>The Best Product Ever Made</h1><p>Trusted by literally everyone. Click anything — oh wait, you can't.</p><span class="fakebtn">Get Started Free</span></div>
+    <div class="fakecards"><div class="fakecard"><h3>Fast</h3><p>Blazingly so.</p></div><div class="fakecard"><h3>Secure</h3><p>Allegedly.</p></div><div class="fakecard"><h3>Simple</h3><p>Deceptively.</p></div></div>
+  </div></div>
+  <div id="pulse"></div>
+  <div id="real"><div class="inner"><div class="wrap" id="content"></div></div></div>
+  <div id="findhint">Everything you see is a flat <b>JPEG</b>. The real site is a <b>2px dot</b> hiding bottom-right →</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#ff2e6e",brand:"THE REAL SITE (1px edition)",
+    title:"You Found the Actual Website",blocks:6,
+    lede:"Congratulations. While the giant beautiful page behind you does nothing at all, THIS — the two-pixel speck — is the only thing on screen you can actually touch."});
+  const real=document.getElementById("real");
+  real.addEventListener("click",()=>{real.classList.toggle("open");document.getElementById("pulse").style.display="none";document.getElementById("findhint").style.display="none";});
+  // make it findable: a faint glow trail
+  </script>
+</body></html>

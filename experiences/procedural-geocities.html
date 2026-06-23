@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Procedural GeoCities</title>
+<style>
+  html,body{margin:0;height:100%;overflow:auto}
+  #page{min-height:100%;text-align:center;font-family:"Comic Sans MS","Times New Roman",cursive;padding:10px}
+  marquee{margin:8px 0}
+  .skull,.deco{font-size:34px;display:inline-block}
+  a{font-weight:bold}
+  hr{border:0;height:4px}
+  #next{position:fixed;right:14px;bottom:14px;z-index:9;font-family:"Comic Sans MS";font-size:16px;padding:10px 16px;border:3px outset #fff;cursor:pointer}
+  .counter{display:inline-block;background:#000;color:#0f0;font-family:monospace;padding:2px 6px;border:2px inset #888;letter-spacing:3px}
+  blink{animation:bl 1s steps(2) infinite}@keyframes bl{50%{opacity:0}}
+</style></head>
+<body>
+  <div id="page"></div>
+  <button id="next">NEXT PAGE »» (∞)</button>
+  <script>
+  const BG=["#000080","#008080","#800080","#000000","#400040","#003300","#330000"];
+  const FG=["#00ff00","#ffff00","#ff00ff","#00ffff","#ff6600","#ffffff"];
+  const TILE=["data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><circle cx='15' cy='15' r='3' fill='%23ff0'/></svg>","data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><rect width='12' height='12' fill='%23404'/><rect x='12' y='12' width='12' height='12' fill='%23404'/></svg>"];
+  const TITLES=["~*~ Welcome 2 My Homepage ~*~","XxX_DARK_REALM_XxX","☆ Cool Dude's Sektor of the Web ☆","¤ The Dungeon of Cyberspace ¤","∴ enter if u dare ∴","My Awesome Site!!1!"];
+  const SKULLS=["💀","🔥","☠️","👽","⚡","🐉","🌐","💿","📟","✨","🕸️","⛧"];
+  const PHRASES=["This site is best viewed in Netscape Navigator 4.0","Sign my guestbook!!!","Under Construction — check back l8r","You are visitor number","Made with Notepad and DREAMS","NO MP3s here (the FBI is watching)","Webring: << random >>","Add me on ICQ","Email me: xXcoolguyXx@hotmail.com"];
+  const r=a=>a[(Math.random()*a.length)|0];
+  let count=1024+(Math.random()*90000|0);
+  function gen(){
+    count+=Math.random()*40|0;
+    const bg=r(BG),fg=r(FG),fg2=r(FG.filter(c=>c!==fg));
+    const page=document.getElementById("page");
+    page.style.background=bg+" url('"+r(TILE)+"')";page.style.color=fg;
+    let h=`<marquee scrollamount="${4+Math.random()*10|0}" behavior="alternate"><font size="6" color="${fg2}"><blink>${r(TITLES)}</blink></font></marquee>`;
+    h+=`<div>${Array.from({length:6},()=>`<span class="skull" style="animation:bl ${(0.4+Math.random())}s steps(2) infinite">${r(SKULLS)}</span>`).join(" ")}</div>`;
+    h+=`<hr style="background:${fg2}"><marquee direction="${Math.random()<.5?'right':'left'}" scrollamount="6"><font color="${fg}">${r(PHRASES)} ✦ ${r(PHRASES)} ✦ ${r(PHRASES)}</font></marquee><hr style="background:${fg}">`;
+    h+=`<p><font size="4" color="${fg2}">${r(PHRASES)}</font></p>`;
+    h+=`<p>You are visitor <span class="counter">${String(count).padStart(7,"0")}</span></p>`;
+    h+=`<p>${Array.from({length:8},()=>`<a href="#" style="color:${r(FG)}" onclick="return false">[ ${r(["Home","Links","About Me","Cool Stuff","Webring","Guestbook","My Pets","Downloads","??? "])} ]</a>`).join(" ")}</p>`;
+    h+=`<div>${Array.from({length:10},()=>r(SKULLS)).join("")}</div>`;
+    h+=`<marquee scrollamount="3"><img-placeholder></marquee>`;
+    h+=`<p><font color="${fg}" size="2">© 199${Math.random()*9|0} ${r(["CoolDude","CyberWitch","Webmaster","xXShadowXx"])} · Powered by hopes and <blink>GIFs</blink></font></p>`;
+    page.innerHTML=h;
+    window.scrollTo(0,0);
+  }
+  gen();
+  document.getElementById("next").onclick=gen;
+  // randomly auto-spawn floating deco
+  setInterval(()=>{const d=document.createElement("div");d.className="deco";d.textContent=r(SKULLS);
+    d.style.cssText=`position:fixed;left:${Math.random()*90}vw;top:-40px;z-index:1;font-size:${20+Math.random()*30}px;transition:top 4s linear;pointer-events:none`;
+    document.body.appendChild(d);requestAnimationFrame(()=>d.style.top="110vh");setTimeout(()=>d.remove(),4200);},700);
+  </script>
+</body></html>

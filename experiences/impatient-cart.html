@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Impatient Shopping Cart</title>
+<style>
+  html,body{margin:0;height:100%;background:#f3f4f8;color:#222;font-family:"Segoe UI",sans-serif;overflow:hidden}
+  #wrap{max-width:560px;margin:0 auto;height:100%;display:flex;flex-direction:column;padding:18px}
+  h2{margin:6px 0}
+  #timer{font-size:13px;color:#c0392b;font-weight:700}
+  .item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e3e6ee;border-radius:10px;padding:12px;margin:8px 0;transition:all .4s}
+  .item.gone{opacity:0;transform:translateX(60px) scale(.9)}
+  .item .emoji{font-size:28px}
+  .item .n{flex:1}.item .n small{color:#888}
+  .item .p{font-weight:800}
+  #total{margin-top:auto;border-top:2px solid #ddd;padding-top:12px;display:flex;justify-content:space-between;font-size:20px;font-weight:800}
+  #pay{margin-top:12px;background:#2c7;border:0;color:#fff;padding:15px;border-radius:10px;font-size:17px;font-weight:800;cursor:pointer}
+  #note{font-size:12px;color:#888;margin-top:8px;text-align:center}
+  #done{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(255,255,255,.95);text-align:center}
+</style></head>
+<body>
+  <div id="wrap">
+    <h2>🛒 Your Cart</h2>
+    <div id="timer"></div>
+    <div id="items"></div>
+    <div id="total"><span>Total</span><span id="sum">$0</span></div>
+    <button id="pay">Pay Now — before it's gone</button>
+    <div id="note">⚠ The cart is impatient. Every 10 seconds you dawdle, it removes an item to "free up inventory."</div>
+  </div>
+  <div id="done"></div>
+  <script>
+  const CATALOG=[["🎧","Wireless Headphones","refurbished",189],["⌨️","Mechanical Keyboard","clicky",129],["🖱️","Ergonomic Mouse","judgmental",59],["🪑","Office Chair","lumbar enabled",340],["☕","Artisanal Coffee","single origin",24],["📱","Phone Case","bulletproof-ish",35],["💡","Smart Bulb","mood: ominous",19],["🧦","Wool Socks","x3 pairs",28]];
+  let cart=CATALOG.map(c=>({emoji:c[0],name:c[1],sub:c[2],price:c[3],id:Math.random()}));
+  const itemsEl=document.getElementById("items");
+  function render(){
+    itemsEl.innerHTML="";cart.forEach(it=>{const d=document.createElement("div");d.className="item";d.dataset.id=it.id;
+      d.innerHTML=`<span class="emoji">${it.emoji}</span><div class="n">${it.name}<br><small>${it.sub}</small></div><div class="p">$${it.price}</div>`;itemsEl.appendChild(d);});
+    document.getElementById("sum").textContent="$"+cart.reduce((s,i)=>s+i.price,0);
+  }
+  render();
+  let countdown=10;
+  const tEl=document.getElementById("timer");
+  const tick=setInterval(()=>{
+    countdown--;
+    tEl.textContent=cart.length?`⏳ ${countdown}s until the cart removes an item… (${cart.length} left)`:"";
+    if(countdown<=0){
+      countdown=10;
+      if(cart.length){
+        const idx=(Math.random()*cart.length)|0;const removed=cart[idx];
+        const el=itemsEl.querySelector(`[data-id="${removed.id}"]`);if(el){el.classList.add("gone");}
+        setTimeout(()=>{cart=cart.filter(c=>c!==removed);render();},400);
+        flash(removed.name);
+      }
+      if(cart.length<=1)tEl.textContent="😤 The cart is nearly empty. It warned you.";
+    }
+  },1000);
+  function flash(name){const f=document.createElement("div");f.textContent="– removed "+name;
+    f.style.cssText="position:fixed;left:50%;top:20px;transform:translateX(-50%);background:#c0392b;color:#fff;padding:8px 16px;border-radius:20px;font-weight:700;z-index:9";
+    document.body.appendChild(f);setTimeout(()=>f.remove(),1400);}
+  document.getElementById("pay").onclick=()=>{clearInterval(tick);
+    const d=document.getElementById("done");d.style.display="flex";
+    d.innerHTML=cart.length?`<h1>✓ Paid in time!</h1><p>You rescued ${cart.length} item(s) for $${cart.reduce((s,i)=>s+i.price,0)} before the cart ate them.</p>`
+      :`<h1>🫥 Empty checkout</h1><p>You hesitated too long. The cart removed everything. It's not sorry.</p>`;
+  };
+  </script>
+</body></html>

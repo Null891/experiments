@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>● ● ●</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;color:#0a0;font-family:"Consolas",monospace;overflow:hidden}
+  #wrap{display:flex;height:100%;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}
+  #beacon{width:60px;height:60px;border-radius:50%;background:#020;transition:background .05s,box-shadow .05s;margin:20px}
+  #beacon.on{background:#0f0;box-shadow:0 0 60px #0f0}
+  #now{font-size:40px;letter-spacing:8px;min-height:50px;color:#0f0}
+  #decoded{max-width:600px;color:#063;font-size:14px;word-break:break-word;margin-top:14px}
+  #ctrl{margin-top:18px}#ctrl button{background:#0a2a18;border:1px solid #0f6;color:#0f6;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;margin:0 4px}
+  .hint{color:#063;font-size:13px;max-width:560px;line-height:1.6}
+</style></head>
+<body>
+  <div id="wrap">
+    <div class="hint">📡 The entire article is being transmitted in <b>Morse code</b> — in the <b>browser tab title</b> above.<br>Watch the tab. Or watch the beacon. The screen itself stays dark.</div>
+    <div id="beacon"></div>
+    <div id="now"></div>
+    <div id="decoded"></div>
+    <div id="ctrl"><button id="speed">faster</button><button id="restart">restart</button></div>
+  </div>
+  <script>
+  const TEXT="THE WHOLE PAGE IS IN THE TAB TITLE. YOU ARE READING WITH YOUR EYES CLOSED. WELCOME TO THE DARK BROADCAST.";
+  const M={A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",K:"-.-",L:".-..",M:"--",N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",Z:"--..","0":"-----","1":".----","2":"..---","3":"...--","4":"....-","5":".....","6":"-....","7":"--...","8":"---..","9":"----.",".":".-.-.-",",":"--..--","?":"..--..","'":".----."," ":"/"};
+  // build a flat sequence of symbols with timing
+  let unit=140;
+  let seq=[];function build(){seq=[];for(const ch of TEXT){const code=M[ch]||"";if(ch===" "){seq.push({sym:"/",on:false,dur:unit*4,ch:" "});continue;}
+    for(const s of code){seq.push({sym:s,on:true,dur:s==="."?unit:unit*3,ch});seq.push({sym:"",on:false,dur:unit});}
+    seq.push({sym:"",on:false,dur:unit*2,ch});}}
+  build();
+  const beacon=document.getElementById("beacon"),now=document.getElementById("now"),dec=document.getElementById("decoded");
+  let i=0,decoded="",revealedCh="";
+  function run(){
+    if(i>=seq.length){i=0;decoded="";dec.textContent="";}
+    const s=seq[i];
+    beacon.classList.toggle("on",s.on);
+    document.title=s.on?(s.sym==="."?"●  transmitting":"▬  transmitting"):"·  ···";
+    now.textContent=s.on?s.sym:"";
+    if(s.ch&&s.ch!==revealedCh){ /* reveal char when its code starts */ }
+    if(s.on){ // accumulate readable decode as letters complete
+    }
+    i++;
+    // when we hit a gap that ends a letter, append the letter
+    if(s.ch&&!s.on&&s.dur>=unit*2){decoded+=s.ch;dec.textContent=decoded;}
+    setTimeout(run,s.dur);
+  }
+  run();
+  document.getElementById("speed").onclick=()=>{unit=unit<=60?140:60;build();document.getElementById("speed").textContent=unit<=60?"slower":"faster";};
+  document.getElementById("restart").onclick=()=>{i=0;decoded="";dec.textContent="";};
+  </script>
+</body></html>

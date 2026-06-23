@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Honeypot Simulator</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#070b12;color:#bcd;font-family:"Consolas",monospace;cursor:crosshair}
+  #c{position:fixed;inset:0}
+  #hud{position:fixed;left:12px;top:10px;z-index:3;background:rgba(8,12,20,.7);padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.7}
+  #hud b{color:#ffd23f}
+  #log{position:fixed;right:12px;top:10px;z-index:3;width:260px;height:160px;overflow:hidden;background:rgba(8,12,20,.7);padding:8px 10px;border-radius:8px;font-size:11px;color:#7c9}
+  .hint{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;font-size:12px;background:rgba(8,12,20,.8);padding:7px 14px;border-radius:20px}
+  .hint b{background:#bcd;color:#111;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="hud">🍯 HONEYPOT DEFENSE<br>integrity: <b id="hp">100%</b><br>blocked: <b id="kills">0</b> · ¤<b id="cash">120</b><br>wave <b id="wave">1</b></div>
+  <div id="log"></div>
+  <div class="hint"><b>Click</b> the path to place a turret (¤60). Stop the brute-force bots reaching your server.</div>
+  <script>
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H,PATH=[];function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;makePath();}rs();addEventListener("resize",rs);
+  function makePath(){PATH=[];const n=6;for(let i=0;i<=n;i++){PATH.push({x:W*i/n,y:H*0.5+Math.sin(i*1.3)*H*0.22});}}
+  const SERVER=()=>({x:W-30,y:H*0.5});
+  let bots=[],turrets=[],bullets=[],hp=100,kills=0,cash=120,wave=1,spawnT=0,toSpawn=8;
+  const COUNTRIES=["RU","CN","KP","BR","IR","NG","US"];
+  function logLine(t){const l=document.getElementById("log");const d=document.createElement("div");d.textContent=t;l.insertBefore(d,l.firstChild);while(l.children.length>11)l.lastChild.remove();}
+  function ip(){return (Math.random()*255|0)+"."+(Math.random()*255|0)+"."+(Math.random()*255|0)+"."+(Math.random()*255|0);}
+  function pathPoint(t){const seg=t*(PATH.length-1);const i=Math.min(PATH.length-2,seg|0);const f=seg-i;
+    return {x:PATH[i].x+(PATH[i+1].x-PATH[i].x)*f,y:PATH[i].y+(PATH[i+1].y-PATH[i].y)*f};}
+  function spawnBot(){const c=COUNTRIES[(Math.random()*COUNTRIES.length)|0];bots.push({t:0,sp:0.0009+Math.random()*0.0009+wave*0.0001,hp:3+wave,max:3+wave,c,ip:ip()});
+    logLine("⚠ "+c+" "+ip()+" → /wp-login.php");}
+  cv.addEventListener("click",e=>{
+    // place turret if near path and affordable
+    if(cash<60)return;
+    let near=false;for(let t=0;t<=1;t+=0.02){const p=pathPoint(t);if(Math.hypot(p.x-e.clientX,p.y-e.clientY)<80){near=true;break;}}
+    if(near){turrets.push({x:e.clientX,y:e.clientY,cd:0,range:140});cash-=60;}
+  });
+  function frame(){
+    requestAnimationFrame(frame);
+    x.fillStyle="#070b12";x.fillRect(0,0,W,H);
+    // path
+    x.strokeStyle="#16314d";x.lineWidth=42;x.lineCap="round";x.lineJoin="round";x.beginPath();PATH.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));x.stroke();
+    x.strokeStyle="#0c2036";x.lineWidth=34;x.stroke();
+    // server
+    const s=SERVER();x.fillStyle="#1dd1a1";x.fillRect(s.x-18,s.y-30,36,60);x.fillStyle="#063";x.fillText("SRV",s.x-10,s.y);
+    // spawning
+    if(toSpawn>0&&++spawnT>Math.max(30,90-wave*5)){spawnBot();spawnT=0;toSpawn--;}
+    if(toSpawn===0&&bots.length===0){wave++;toSpawn=8+wave*2;cash+=40;document.getElementById("wave").textContent=wave;logLine("✓ wave cleared. +40¤");}
+    // bots
+    bots.forEach(b=>{b.t+=b.sp;const p=pathPoint(Math.min(1,b.t));b.x=p.x;b.y=p.y;
+      x.fillStyle="#c0392b";x.beginPath();x.arc(b.x,b.y,11,0,7);x.fill();
+      x.fillStyle="#fff";x.font="9px Consolas";x.textAlign="center";x.fillText(b.c,b.x,b.y+3);
+      x.fillStyle="#2a2";x.fillRect(b.x-11,b.y-16,22*(b.hp/b.max),3);
+      if(b.t>=1){hp-=8;b.dead=true;logLine("✗ breach! -8 integrity");}});
+    // turrets
+    turrets.forEach(t=>{t.cd--;x.fillStyle="#2a6cff";x.beginPath();x.arc(t.x,t.y,12,0,7);x.fill();
+      x.strokeStyle="rgba(42,108,255,.15)";x.beginPath();x.arc(t.x,t.y,t.range,0,7);x.stroke();
+      if(t.cd<=0){let tgt=null,td=t.range;bots.forEach(b=>{if(b.dead)return;const d=Math.hypot(b.x-t.x,b.y-t.y);if(d<td){td=d;tgt=b;}});
+        if(tgt){bullets.push({x:t.x,y:t.y,tx:tgt.x,ty:tgt.y,tgt});t.cd=18;}}});
+    // bullets
+    bullets=bullets.filter(bl=>!bl.done);
+    bullets.forEach(bl=>{const dx=bl.tgt.x-bl.x,dy=bl.tgt.y-bl.y,d=Math.hypot(dx,dy);
+      if(d<8||bl.tgt.dead){if(!bl.tgt.dead){bl.tgt.hp--;if(bl.tgt.hp<=0){bl.tgt.dead=true;kills++;cash+=12;}}bl.done=true;return;}
+      bl.x+=dx/d*9;bl.y+=dy/d*9;x.fillStyle="#7af0ff";x.beginPath();x.arc(bl.x,bl.y,3,0,7);x.fill();});
+    bots=bots.filter(b=>!b.dead);
+    hp=Math.max(0,hp);
+    document.getElementById("hp").textContent=hp+"%";document.getElementById("kills").textContent=kills;document.getElementById("cash").textContent=cash;
+    if(hp<=0){x.fillStyle="rgba(120,0,0,.5)";x.fillRect(0,0,W,H);x.fillStyle="#fff";x.font="bold 34px Consolas";x.textAlign="center";x.fillText("SERVER COMPROMISED — refresh to redeploy",W/2,H/2);}
+  }
+  frame();
+  </script>
+</body></html>

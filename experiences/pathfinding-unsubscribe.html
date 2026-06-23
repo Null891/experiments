@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Pathfinding Unsubscribe</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #unsub{position:fixed;z-index:20;background:#e23;color:#fff;border:0;padding:14px 26px;border-radius:10px;
+    font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .04s}
+  #stay{position:fixed;left:50%;bottom:60px;transform:translateX(-50%);z-index:20;background:#2c7;color:#fff;border:0;
+    padding:14px 26px;border-radius:10px;font-weight:800;font-size:16px;cursor:pointer}
+  #cap{position:fixed;left:50%;top:40px;transform:translateX(-50%);z-index:21;font-family:"Segoe UI",sans-serif;
+    text-align:center;color:#a33;font-weight:700}
+  #score{position:fixed;left:16px;top:14px;z-index:21;font-family:"Segoe UI",sans-serif;font-weight:700;color:#666}
+</style></head>
+<body>
+  <div class="wrap" id="content"></div>
+  <div id="cap">We're sad to see you go. Please click <b>Unsubscribe</b> to confirm.</div>
+  <div id="score">Catch attempts: <span id="n">0</span></div>
+  <button id="unsub">Unsubscribe</button>
+  <button id="stay">Actually, Stay Subscribed 💚</button>
+  <div class="hint">Try to click <b>Unsubscribe</b>. It uses pathfinding to flee from your cursor.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#e23",brand:"NEWSLETTER PREFERENCES",
+    title:"You Have Been Subscribed to 47 Newsletters",blocks:9,
+    lede:"Managing your preferences is easy! Simply click the unsubscribe button below. We promise it will hold still."});
+  const b=document.getElementById("unsub");
+  let bx=innerWidth*0.5,by=innerHeight*0.5,vx=0,vy=0,attempts=0,caught=false;
+  b.style.left=bx+"px";b.style.top=by+"px";
+  let mx=-999,my=-999;
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;});
+  b.addEventListener("click",()=>{ if(caught)return; caught=true; b.textContent="Fine. You win. 😩";
+    setTimeout(()=>{document.getElementById("cap").innerHTML="Unsubscribed. The button is broken now. Happy?";},400); });
+  // obstacles to "hide behind": the article cards/paragraphs
+  function obstacles(){return [...document.querySelectorAll("#content .card, #content h2, #content blockquote")].map(e=>e.getBoundingClientRect());}
+  let obs=obstacles();addEventListener("resize",()=>obs=obstacles());
+  function step(){
+    if(!caught){
+      const bw=b.offsetWidth,bh=b.offsetHeight;
+      const cx=bx+bw/2,cy=by+bh/2;
+      // flee force from cursor
+      const dx=cx-mx,dy=cy-my,d=Math.hypot(dx,dy);
+      if(d<240){const f=(240-d)/240*2.4;vx+=dx/d*f;vy+=dy/d*f;attempts; }
+      // seek nearest obstacle to "hide behind" (move to far side)
+      let near=null,nd=1e9;for(const o of obs){const ox=o.left+o.width/2,oy=o.top+o.height/2;const dd=Math.hypot(ox-cx,oy-cy);if(dd<nd){nd=dd;near=o;}}
+      if(near && d<300){const ox=near.left+near.width/2,oy=near.top+near.height/2;
+        const ax=ox+(ox-mx)*0.4,ay=oy+(oy-my)*0.4; vx+=(ax-cx)*0.01;vy+=(ay-cy)*0.01;}
+      // wander
+      vx+=(Math.random()-.5)*0.4;vy+=(Math.random()-.5)*0.4;
+      vx*=0.86;vy*=0.86;
+      bx+=vx;by+=vy;
+      // bounce off walls
+      if(bx<6){bx=6;vx=Math.abs(vx);}if(bx>innerWidth-bw-6){bx=innerWidth-bw-6;vx=-Math.abs(vx);}
+      if(by<70){by=70;vy=Math.abs(vy);}if(by>innerHeight-bh-6){by=innerHeight-bh-6;vy=-Math.abs(vy);}
+      b.style.left=bx+"px";b.style.top=by+"px";
+    }
+    requestAnimationFrame(step);
+  }
+  // count "attempts" as near-misses
+  let lastClose=false;
+  setInterval(()=>{const cx=bx+b.offsetWidth/2,cy=by+b.offsetHeight/2;const close=Math.hypot(cx-mx,cy-my)<90;
+    if(close&&!lastClose&&!caught){attempts++;document.getElementById("n").textContent=attempts;}lastClose=close;},80);
+  document.getElementById("stay").addEventListener("click",()=>MX.exitToMansion());
+  step();
+  </script>
+</body></html>

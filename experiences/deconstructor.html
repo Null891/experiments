@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The De-constructor</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#fff}
+  #scroller{height:100%;overflow:auto}
+  #bar{position:fixed;left:0;top:0;right:0;z-index:20;background:#14161d;color:#fff;padding:10px 16px;display:flex;
+    gap:14px;align-items:center;font-family:"Segoe UI",sans-serif}
+  #bar button{background:#e23;border:0;color:#fff;padding:8px 18px;border-radius:8px;font-weight:800;cursor:pointer}
+  #bar button.stop{background:#555}
+  #tagfeed{font-family:"Consolas",monospace;font-size:12px;color:#9af;white-space:nowrap;overflow:hidden;flex:1}
+  #content{margin-top:50px}
+  .dying{animation:die .5s forwards}
+  @keyframes die{to{opacity:0;transform:scale(.96) translateY(-6px);filter:blur(2px)}}
+</style></head>
+<body>
+  <div id="bar">
+    <button id="go">▶ Deconstruct this page</button>
+    <span id="tagfeed">the raw HTML will be un-written here, tag by tag…</span>
+    <span id="left" style="font-family:monospace;color:#9f9"></span>
+  </div>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#444",brand:"THE UNMAKING",
+    title:"Watch Me Take This Whole Page Apart, Tag by Tag",blocks:10,
+    lede:"Press the button. I will walk the DOM from the leaves inward and un-write every element, until there is nothing left but a blank white screen and the memory of structure."});
+  const content=document.getElementById("content"),feed=document.getElementById("tagfeed"),leftEl=document.getElementById("left");
+  let running=false,timer;
+  function deepestLast(root){
+    let node=root,last=null;
+    // find a leaf-ish node to remove (deepest last child with no element children, else any text)
+    function walk(n){ if(n.children.length===0){last=n;return;} walk(n.children[n.children.length-1]); }
+    if(root.children.length)walk(root);
+    return last;
+  }
+  function tagOf(el){const a=[...el.attributes].map(a=>`${a.name}="${a.value.slice(0,18)}"`).join(" ");
+    return `</${el.tagName.toLowerCase()}>  ⟵ ${el.tagName.toLowerCase()}${a?" "+a:""}`;}
+  function count(){return content.getElementsByTagName("*").length;}
+  function tick(){
+    if(!running)return;
+    const el=deepestLast(content);
+    if(!el){ feed.textContent="…the document is empty."; document.body.style.background="#fff"; running=false; leftEl.textContent="0 nodes";
+      const n=document.createElement("div");n.style.cssText="position:fixed;left:50%;top:55%;transform:translate(-50%,-50%);color:#bbb;font-family:monospace;font-size:13px";
+      n.textContent="◻ blank. there was a website here.";document.body.appendChild(n);return; }
+    feed.textContent=tagOf(el);
+    leftEl.textContent=count()+" nodes left";
+    el.classList.add("dying");
+    setTimeout(()=>el.remove(),220);
+    timer=setTimeout(tick,140);
+  }
+  document.getElementById("go").addEventListener("click",e=>{
+    running=!running;
+    e.target.textContent=running?"⏸ Pause the unmaking":"▶ Resume";
+    e.target.classList.toggle("stop",running);
+    if(running)tick();else clearTimeout(timer);
+  });
+  </script>
+</body></html>

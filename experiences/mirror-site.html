@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Mirror Site</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto}
+  #pick{position:fixed;inset:0;z-index:20;background:rgba(8,10,16,.96);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;color:#fff;font-family:"Segoe UI",sans-serif;text-align:center;padding:20px}
+  #pick h2{font-weight:800}#pick .opts{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:680px;margin-top:18px}
+  #pick button{background:#1b2333;border:1px solid #2a3550;color:#cfe;padding:14px 20px;border-radius:12px;font-weight:700;cursor:pointer;font-size:15px}
+  #pick button:hover{background:#2a6cff;color:#fff}
+  #tag{position:fixed;left:16px;top:14px;z-index:9;font-family:"Segoe UI",sans-serif;font-size:12px;background:rgba(20,16,30,.85);color:#cfe;padding:8px 12px;border-radius:8px}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="tag"></div>
+  <div id="pick">
+    <h2>🪞 Where did you just come from?</h2>
+    <p style="opacity:.7">This site mirrors the tone of your last destination. (Normally it reads your referrer — here, you tell it.)</p>
+    <div class="opts" id="opts"></div>
+  </div>
+  <script src="_shared.js"></script>
+  <script>
+  const VOICES={
+    "LinkedIn":{brand:"SYNERGY DAILY",accent:"#0a66c2",title:"I'm Humbled and Honored to Announce This Webpage",
+      pre:["Agree? ✅","Thoughts? 👇","Here's what nobody tells you:"],
+      style:s=>"🚀 "+s.replace(/\./g,". \n\nAnd that's a wrap on leadership lessons.").slice(0,400)+" #blessed #grind #thoughtleadership"},
+    "4chan":{brand:">>ANON",accent:"#789922",title:"anon discovers a webpage, immediately regrets it",
+      pre:[">be me",">open website",">"],style:s=>"> "+s.toLowerCase().replace(/\./g,"\n> ").slice(0,360)+"\nmfw"},
+    "a cooking blog":{brand:"GRANDMA'S KITCHEN",accent:"#e07a2f",title:"My Nana's Secret Webpage (You'll Cry)",
+      pre:["But first, a story.","Jump to recipe ↓","Serves 4."],
+      style:s=>"Before we get to the content, let me tell you about the summer of 1987. "+s+" Anyway, preheat your browser to 350°."},
+    "Wikipedia":{brand:"THE FREE ENCYCLOPEDIA",accent:"#36c",title:"Webpage (disambiguation)",
+      pre:["[citation needed]","This article needs additional citations.","See also:"],
+      style:s=>s+"[1] However, this claim is disputed.[2] As of 2024, the webpage remains notable.[citation needed]"},
+    "a crypto site":{brand:"MOONROCKET CAPITAL",accent:"#f7931a",title:"This Webpage Is Going To $1,000,000 (NFA)",
+      pre:["WAGMI 🚀","Not financial advice","Diamond hands 💎🙌"],
+      style:s=>"GM frens. "+s.replace(/\./g,". LFG. ")+" This is the floor. Have fun staying poor."},
+    "a meditation app":{brand:"STILLNESS",accent:"#7fb069",title:"This Webpage, and Also, This Breath",
+      pre:["Notice the cursor.","Let the page be a page.","Breathe in… and out."],
+      style:s=>"Take a moment. "+s.replace(/\./g,"…\n\n")+"\n\nThere is nowhere to scroll to. You are already here."}
+  };
+  const opts=document.getElementById("opts");
+  Object.keys(VOICES).forEach(k=>{const b=document.createElement("button");b.textContent=k;b.onclick=()=>apply(k);opts.appendChild(b);});
+  function apply(k){
+    const v=VOICES[k];document.getElementById("pick").style.display="none";
+    document.getElementById("tag").innerHTML="🪞 mirroring the tone of <b>"+k+"</b>";
+    const base=MX.para(5);
+    MX.fakeArticle(document.getElementById("content"),{accent:v.accent,brand:v.brand,title:v.title,blocks:0,
+      lede:v.style(base)});
+    const c=document.getElementById("content");
+    for(let i=0;i<5;i++){const p=document.createElement("p");p.style.whiteSpace="pre-wrap";
+      p.textContent=v.pre[i%v.pre.length]+" "+v.style(MX.para(4));c.appendChild(p);}
+  }
+  </script>
+</body></html>

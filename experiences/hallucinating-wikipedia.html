@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Hallucinating Wikipedia</title>
+<style>
+  html,body{margin:0;height:100%;background:#fff;color:#202122;font-family:Arial,sans-serif;overflow:auto}
+  #top{background:#f6f6f6;border-bottom:1px solid #a2a9b1;padding:8px 16px;font-size:13px;display:flex;gap:14px;position:sticky;top:0;z-index:5}
+  #top b{color:#3366cc}
+  #main{max-width:900px;margin:0 auto;padding:18px 22px;display:grid;grid-template-columns:1fr 300px;gap:24px}
+  h1{font-family:"Linux Libertine",Georgia,serif;font-size:30px;border-bottom:1px solid #a2a9b1;padding-bottom:4px;font-weight:400}
+  h2{font-family:Georgia,serif;font-size:22px;border-bottom:1px solid #a2a9b1;font-weight:400;margin-top:22px}
+  p{line-height:1.6;font-size:15px}
+  a{color:#3366cc;text-decoration:none}a:hover{text-decoration:underline}
+  sup{color:#3366cc;cursor:pointer}
+  .infobox{border:1px solid #a2a9b1;background:#f8f9fa;font-size:13px;padding:0;align-self:start}
+  .infobox .h{background:#ccd;text-align:center;font-weight:700;padding:6px}
+  .infobox table{width:100%;border-collapse:collapse}
+  .infobox td{border-top:1px solid #eaecf0;padding:5px 8px;vertical-align:top}
+  .portrait{width:100%;height:200px;display:block}
+  .mapbox{height:160px;border:1px solid #a2a9b1}
+  .refs{font-size:12px;color:#444;grid-column:1/-1}
+  #regen{position:fixed;right:16px;bottom:16px;z-index:9;background:#3366cc;color:#fff;border:0;padding:11px 20px;border-radius:6px;font-weight:700;cursor:pointer}
+  .warn{grid-column:1/-1;background:#fef6e7;border:1px solid #f0c36d;padding:6px 12px;font-size:12px;border-radius:4px}
+</style></head>
+<body>
+  <div id="top"><b>W</b> THE HALLUCINATING ENCYCLOPEDIA · <span style="color:#72777d">every word below is fabricated in real time</span></div>
+  <div id="main"></div>
+  <button id="regen">⟳ Hallucinate another article</button>
+  <script src="_shared.js"></script>
+  <script>
+  const PLACES=["Lower Saxomburg","the Kingdom of Vellishar","New Brattlecombe","the Tcherny Basin","Old Marghest","the Duchy of Pelm","Sankt Aurelius","the Vossbridge Confederacy"];
+  const PEOPLE=["Aldous Verrick","Imelda Quanstrom","Sir Bertran Holloway","Cosima de Vaal","Marshal Yevgen Tor","Beatrix Onslow","Father Anselm Crane"];
+  const EVENTS=["the Treaty of","the Great","the Battle of","the Velvet","the Salt","the Quiet","the Brass","the Forgotten"];
+  const THINGS=["Schism","Rebellion","Accord","Migration","Reformation","Conspiracy","Famine","Exposition"];
+  const r=a=>a[(Math.random()*a.length)|0];
+  function portrait(seed){const c=document.createElement("canvas");c.width=240;c.height=200;const g=c.getContext("2d");
+    const rng=MX.mulberry(seed);g.fillStyle="#cdbfae";g.fillRect(0,0,240,200);
+    // sepia abstract "old photo" of a person who never existed
+    g.fillStyle="#8a7a64";g.beginPath();g.ellipse(120,130,60,80,0,0,7);g.fill(); // body
+    g.fillStyle="#b8a589";g.beginPath();g.arc(120,80,42,0,7);g.fill(); // head
+    g.fillStyle="#5a4a38";for(let i=0;i<20;i++)g.fillRect(78+rng()*84,40+rng()*20,3,8); // hair
+    g.fillStyle="#3a2e22";g.fillRect(104,76,8,4);g.fillRect(128,76,8,4); // eyes
+    g.strokeStyle="rgba(60,40,20,.3)";for(let y=0;y<200;y+=2){g.beginPath();g.moveTo(0,y);g.lineTo(240,y);g.stroke();}
+    g.fillStyle="rgba(255,240,210,.18)";g.fillRect(0,0,240,200);
+    return c.toDataURL();}
+  function fakemap(seed){const c=document.createElement("canvas");c.width=300;c.height=160;const g=c.getContext("2d");
+    const rng=MX.mulberry(seed);g.fillStyle="#aad3df";g.fillRect(0,0,300,160);
+    g.fillStyle="#cde0b0";g.beginPath();g.moveTo(0,80);for(let xx=0;xx<=300;xx+=20)g.lineTo(xx,80+Math.sin(xx*0.05+seed)*30+rng()*20);g.lineTo(300,160);g.lineTo(0,160);g.fill();
+    g.fillStyle="#c33";g.beginPath();g.arc(120+rng()*60,70+rng()*30,5,0,7);g.fill();
+    g.fillStyle="#333";g.font="11px Arial";g.fillText("approx. location (disputed)",90,150);return c.toDataURL();}
+  function gen(){
+    const main=document.getElementById("main");main.innerHTML="";
+    const seed=Math.random()*1e9|0;
+    const title=r(EVENTS)+" "+r(THINGS)+" of "+(1200+Math.floor(Math.random()*700));
+    const place=r(PLACES),person=r(PEOPLE),person2=r(PEOPLE);
+    const article=document.createElement("div");
+    let body=`<h1>${title}</h1>
+      <p><b>${title}</b> was a pivotal series of events that took place in ${place}, fundamentally reshaping the region's
+      relationship with ${r(["salt taxation","clockmaking","the herring trade","ecclesiastical law","the practice of competitive grief"])}.<sup>[1]</sup>
+      Historians broadly agree that it began when ${person} publicly denounced ${person2} during the annual ${r(["Lantern Assembly","Cheese Synod","Festival of Apologies"])}.<sup>[2]</sup></p>
+      <h2>Background</h2>
+      <p>${MX.para(5)}<sup>[3]</sup> By the spring of that year, ${place} had become a tinderbox of competing interests, none of which have ever been independently verified.<sup>[4]</sup></p>
+      <h2>The events</h2>
+      <p>${MX.para(6)} According to the only surviving account — itself a forgery discovered in 1971 — ${person} is said to have remarked, "${MX.lorem(6)}"<sup>[5]</sup></p>
+      <h2>Legacy</h2>
+      <p>${MX.para(4)} Today, ${title} is commemorated nowhere, by no one, which scholars cite as proof of its profound significance.<sup>[6]</sup></p>`;
+    article.innerHTML=body;
+    const info=document.createElement("div");info.className="infobox";
+    info.innerHTML=`<div class="h">${title}</div><img class="portrait" src="${portrait(seed)}">
+      <table>
+        <tr><td>Date</td><td>${1200+Math.floor(Math.random()*700)}–${1200+Math.floor(Math.random()*700)}</td></tr>
+        <tr><td>Location</td><td>${place}</td></tr>
+        <tr><td>Caused by</td><td>${person}</td></tr>
+        <tr><td>Result</td><td>${r(["Inconclusive","Total reorganization of the calendar","Everyone agreed to never speak of it","A statue, since stolen"])}</td></tr>
+        <tr><td>Casualties</td><td>${r(["disputed","exactly 41","none, allegedly","unknowable"])}</td></tr>
+      </table>
+      <img class="mapbox" src="${fakemap(seed)}" style="width:100%">`;
+    const refs=document.createElement("div");refs.className="refs";refs.innerHTML="<h2>References</h2>"+
+      Array.from({length:6},(_,i)=>`<div>${i+1}. ${r(PEOPLE)}, <i>${MX.lorem(4).replace(".","")}</i> (${1850+Math.floor(Math.random()*170)}), pp. ${10+Math.floor(Math.random()*400)}. [fabricated]</div>`).join("");
+    const warn=document.createElement("div");warn.className="warn";warn.textContent="⚠ This article, its citations, its photographs, and the people in them do not exist and never did. Generated just now.";
+    main.appendChild(article);main.appendChild(info);main.appendChild(warn);main.appendChild(refs);
+    main.querySelectorAll("sup").forEach(s=>s.onclick=()=>refs.scrollIntoView({behavior:"smooth"}));
+  }
+  gen();document.getElementById("regen").onclick=gen;
+  </script>
+</body></html>

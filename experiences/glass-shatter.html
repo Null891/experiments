@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Glass Shatter</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#04060c}
+  #c{position:fixed;inset:0;display:block}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="hint">Click anywhere (a "link") to <b>shatter</b> the page — it reassembles into the next one</div>
+  <script src="_shared.js"></script>
+  <script>
+  const cv=document.getElementById("c"), ctx=cv.getContext("2d");
+  let W,H,DPR=Math.min(devicePixelRatio,2);
+  function size(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+"px";cv.style.height=H+"px";ctx.setTransform(DPR,0,0,DPR,0,0);buildPage();}
+  // offscreen page render
+  let page=document.createElement("canvas"), pctx=page.getContext("2d");
+  const PALETTES=[["#fbf9f3","#3355ff"],["#0d1117","#58f0c8"],["#fff4e6","#ff5d3b"],["#101426","#ff7ab8"],["#f3f6ff","#6a4dff"]];
+  let pi=0;
+  function buildPage(){ page.width=W*DPR; page.height=H*DPR; pctx.setTransform(DPR,0,0,DPR,0,0);
+    const[bg,ac]=PALETTES[pi%PALETTES.length];
+    MX.paintPage(pctx,W,H,{bg,accent:ac,seed:pi*7+3,title:MX.TITLES[pi%MX.TITLES.length],brand:"GLASSWORKS DAILY"});}
+
+  // shards: radial impact pattern
+  let shards=[], state="idle", t=0, impact={x:0,y:0};
+  function buildShards(ix,iy){
+    shards=[]; const rings=7, base=42;
+    for(let r=0;r<rings;r++){
+      const r0=r/rings, r1=(r+1)/rings;
+      const segs=base+r*10;
+      for(let s=0;s<segs;s++){
+        const a0=(s/segs)*Math.PI*2 + (r*0.13), a1=((s+1)/segs)*Math.PI*2 + (r*0.13);
+        const jr=0.04;
+        const rad0=(r0+ (Math.random()*jr))*1.5, rad1=(r1+(Math.random()*jr))*1.5;
+        const maxR=Math.hypot(W,H);
+        const poly=[
+          [ix+Math.cos(a0)*rad0*maxR, iy+Math.sin(a0)*rad0*maxR],
+          [ix+Math.cos(a1)*rad0*maxR, iy+Math.sin(a1)*rad0*maxR],
+          [ix+Math.cos(a1)*rad1*maxR, iy+Math.sin(a1)*rad1*maxR],
+          [ix+Math.cos(a0)*rad1*maxR, iy+Math.sin(a0)*rad1*maxR],
+        ];
+        let cx=0,cy=0; poly.forEach(p=>{cx+=p[0];cy+=p[1];}); cx/=4;cy/=4;
+        const dir=Math.atan2(cy-iy,cx-ix), dist=Math.hypot(cx-ix,cy-iy);
+        shards.push({poly,cx,cy,
+          vz: 0.6+Math.random()*1.4 + dist/maxR,        // toward camera (scale)
+          vx: Math.cos(dir)*(0.5+Math.random()),
+          vy: Math.sin(dir)*(0.5+Math.random())-0.3,
+          rot:(Math.random()-.5)*0.06, rotV:(Math.random()-.5)*0.12,
+          delay: dist/maxR*0.25 });
+      }
+    }
+  }
+  function drawShard(s, scale, dx, dy, rot, alpha){
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.beginPath(); s.poly.forEach((p,i)=>{const x=s.cx+(p[0]-s.cx);const y=s.cy+(p[1]-s.cy);i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}); ctx.closePath();
+    ctx.save();
+    // transform around shard centroid
+    ctx.translate(s.cx+dx,s.cy+dy); ctx.scale(scale,scale); ctx.rotate(rot); ctx.translate(-s.cx,-s.cy);
+    ctx.beginPath(); s.poly.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); ctx.clip();
+    ctx.drawImage(page,0,0,page.width,page.height,0,0,W,H);
+    // glassy edge highlight
+    ctx.lineWidth=1; ctx.strokeStyle="rgba(180,225,255,"+(0.5*alpha)+")"; ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  }
+  function shatter(x,y){ if(state!=="idle")return; impact={x,y}; buildShards(x,y); pi++; buildPage(); /*next page hidden until reassemble*/ state="out"; t=0; }
+  cv.addEventListener("click",e=>shatter(e.clientX,e.clientY));
+
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    if(state==="idle"){ ctx.drawImage(page,0,0,page.width,page.height,0,0,W,H);
+      // subtle glass sheen
+    } else if(state==="out"){
+      t+=0.016; const T=Math.min(1,t/1.1);
+      // draw shattering shards flying at camera
+      shards.forEach(s=>{
+        const p=Math.max(0,Math.min(1,(T-s.delay)/(1-s.delay)));
+        const e=p*p;
+        const scale=1+e*s.vz*2.2;
+        const dx=s.vx*e*W*0.5, dy=s.vy*e*H*0.5 + e*e*120;
+        const rot=s.rot+s.rotV*e*3;
+        drawShard(s,scale,dx,dy,rot,1-e*0.9);
+      });
+      if(T>=1){ state="in"; t=0; }
+    } else if(state==="in"){
+      t+=0.016; const T=Math.min(1,t/1.0);
+      const e=1-Math.pow(1-T,3);
+      // shards fly IN from camera to form the new page
+      shards.forEach(s=>{
+        const scale=1+(1-e)*s.vz*2.0;
+        const dx=s.vx*(1-e)*W*0.5, dy=-(1-e)*H*0.4 - (1-e)*(1-e)*100;
+        const rot=s.rotV*(1-e)*2;
+        drawShard(s,scale,dx,dy,rot,e);
+      });
+      if(T>=1){ state="idle"; }
+    }
+    requestAnimationFrame(frame);
+  }
+  addEventListener("resize",size); size(); frame();
+  </script>
+</body></html>

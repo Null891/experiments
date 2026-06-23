@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Looming Shadow</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto;position:relative}
+  .hidden-msg{color:transparent;transition:color .25s,text-shadow .25s;font-style:italic}
+  .hidden-msg.lit{color:#ff4d6d;text-shadow:0 0 10px rgba(255,77,109,.7)}
+  /* the moving shadow: a big blurred blob that inverts what's under it */
+  #shadow{position:fixed;z-index:6;width:62vw;height:62vw;left:0;top:0;pointer-events:none;
+    border-radius:50%;
+    -webkit-backdrop-filter:invert(1) hue-rotate(180deg) contrast(1.2);
+    backdrop-filter:invert(1) hue-rotate(180deg) contrast(1.2);
+    -webkit-mask-image:radial-gradient(circle at center, #000 38%, transparent 66%);
+    mask-image:radial-gradient(circle at center, #000 38%, transparent 66%);
+    mix-blend-mode:normal;filter:blur(2px)}
+  #umbra{position:fixed;z-index:5;width:62vw;height:62vw;pointer-events:none;border-radius:50%;
+    background:radial-gradient(circle at center, rgba(10,8,20,.55) 30%, transparent 65%);filter:blur(8px)}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="umbra"></div>
+  <div id="shadow"></div>
+  <div class="hint">A <b>shadow</b> is crossing the page — it inverts everything and reveals what was hidden in the light</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#5a4b8a",brand:"THE PENUMBRA POST",
+    title:"Some Words Only Exist When the Light Goes Out",blocks:10,
+    lede:"There are messages written on this page in ink the color of the paper. The shadow knows where they are."});
+  // seed hidden messages inside paragraphs
+  const secrets=["you were not supposed to find this","the mansion is awake","keep reading, it is listening",
+    "room 100 remembers you","do not trust the navigation","the light was hiding everything"];
+  const ps=[...document.querySelectorAll("#content p")];
+  secrets.forEach((s,i)=>{ const p=ps[(i*1+1)%ps.length]; const span=document.createElement("span");
+    span.className="hidden-msg"; span.textContent=" "+s+". "; p.appendChild(span); });
+
+  const shadow=document.getElementById("shadow"), umbra=document.getElementById("umbra");
+  let t=0, mx=innerWidth*0.5, my=innerHeight*0.5, tx=mx, ty=my;
+  addEventListener("mousemove",e=>{tx=e.clientX;ty=e.clientY;});
+  function frame(){
+    t+=0.006;
+    // auto drift in a big lissajous, nudged toward mouse
+    const ax=innerWidth*(0.5+0.42*Math.sin(t*1.3));
+    const ay=innerHeight*(0.5+0.4*Math.sin(t*0.9+1));
+    mx+=( (ax*0.7+tx*0.3) - mx)*0.04;
+    my+=( (ay*0.7+ty*0.3) - my)*0.04;
+    const sz=shadow.offsetWidth;
+    shadow.style.left=umbra.style.left=(mx-sz/2)+"px";
+    shadow.style.top =umbra.style.top =(my-sz/2)+"px";
+    // breathing scale = "looming"
+    const sc=1+0.12*Math.sin(t*2);
+    shadow.style.transform=umbra.style.transform=`scale(${sc})`;
+    // reveal hidden messages whose center is within the shadow
+    document.querySelectorAll(".hidden-msg").forEach(el=>{
+      const r=el.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2;
+      const d=Math.hypot(cx-mx,cy-my);
+      el.classList.toggle("lit", d < sz*0.42*sc);
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+  </script>
+</body></html>

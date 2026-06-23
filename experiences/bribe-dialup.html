@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Bribe</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#0e0e12}
+  #scroller{height:100%;overflow:auto;background:var(--paper)}
+  #content{min-height:50px}
+  #toll{position:fixed;left:0;right:0;top:0;z-index:9;background:#14161d;color:#fff;font-family:"Segoe UI",sans-serif;
+    padding:10px 16px;display:flex;gap:14px;align-items:center;font-size:13px}
+  #toll button{background:#e2a23b;border:0;color:#201400;padding:8px 16px;border-radius:8px;font-weight:800;cursor:pointer}
+  #toll button:disabled{opacity:.5}
+  #speed{font-family:monospace;color:#ffd479}
+  #powbar{width:140px;height:8px;background:#333;border-radius:5px;overflow:hidden}
+  #powfill{height:100%;width:0;background:linear-gradient(90deg,#e2a23b,#3dff7a)}
+  #content{padding-top:54px}
+  .modem{font-family:monospace;color:#7c9;white-space:pre;font-size:12px}
+</style></head>
+<body>
+  <div id="toll">
+    🐌 <span id="speed">connection throttled to 56 kbps</span>
+    <span style="margin-left:auto">pay for bandwidth →</span>
+    <button id="pay">Solve PoW puzzle to unthrottle</button>
+    <div id="powbar"><div id="powfill"></div></div>
+  </div>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <script src="_shared.js"></script>
+  <script>
+  // full text we will reveal slowly (or fast once paid)
+  const root=document.getElementById("content");
+  const tmp=document.createElement("div");
+  MX.fakeArticle(tmp,{accent:"#e2a23b",brand:"THE TOLLBOOTH TIMES",
+    title:"This Page Loads at Dial-Up Speed Until You Pay the Toll",blocks:8,
+    lede:"Bandwidth isn't free. We've throttled you to 56k. Want the rest faster? Burn some CPU and solve our proof-of-work. Capitalism, but make it cryptographic."});
+  const FULL=tmp.innerHTML;
+  let shown=0,cps=18; // chars per tick (56k vibe)
+  let modemDone=false;
+  // modem handshake flavor
+  root.innerHTML='<div class="modem" id="modem"></div>';
+  const handshake="ATDT 18005551212\nCONNECT 56000\n~~~ screeeee khhhh bing bong ~~~\n";
+  let hi=0;const hsTimer=setInterval(()=>{document.getElementById("modem").textContent=handshake.slice(0,hi++);
+    if(hi>handshake.length){clearInterval(hsTimer);modemDone=true;}},40);
+  function reveal(){
+    if(modemDone){shown+=cps;root.innerHTML='<div class="modem">'+handshake+'</div>'+FULL.slice(0,shown);}
+    if(shown<FULL.length)setTimeout(reveal,55);
+  }
+  setTimeout(reveal,1800);
+  function updSpeed(){document.getElementById("speed").textContent=cps>200?`unthrottled · ${(cps*60/1000).toFixed(0)} kbps 🚀`:`throttled to 56 kbps (${Math.round(shown/Math.max(1,FULL.length)*100)}% loaded)`;}
+  setInterval(updSpeed,300);
+  // proof of work: find a nonce whose SHA-256 starts with N zero hex digits
+  async function sha(s){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,"0")).join("");}
+  document.getElementById("pay").onclick=async()=>{
+    const btn=document.getElementById("pay");btn.disabled=true;btn.textContent="mining bandwidth…";
+    const target="0000";let nonce=0,hash="";const t0=performance.now();
+    while(true){hash=await sha("bandwidth-toll:"+nonce);
+      document.getElementById("powfill").style.width=Math.min(100,parseInt(hash.slice(0,4),16)/65535*100)+"%";
+      if(hash.startsWith(target))break;nonce++;
+      if(nonce%200===0)await new Promise(r=>setTimeout(r,0)); // yield
+    }
+    const secs=((performance.now()-t0)/1000).toFixed(1);
+    cps=900; // unthrottle
+    btn.textContent="✓ paid ("+secs+"s, nonce "+nonce+")";document.getElementById("powfill").style.width="100%";
+    const note=document.createElement("div");note.style.cssText="font-family:monospace;color:#3dff7a;padding:4px 0";
+    note.textContent="PoW accepted: "+hash.slice(0,20)+"… — full speed unlocked.";root.prepend(note);
+  };
+  </script>
+</body></html>

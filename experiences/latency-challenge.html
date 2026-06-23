@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The 1ms Latency Challenge</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#04070f;color:#bcd;font-family:"Segoe UI",sans-serif}
+  #c{position:fixed;inset:0}
+  #hud{position:fixed;left:16px;top:14px;z-index:3;background:rgba(8,12,24,.6);padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.7}
+  #hud .ms{font-size:26px;font-weight:800;color:#5ad1ff}
+  #img{position:fixed;right:18px;bottom:18px;z-index:3;width:160px;height:120px;border-radius:10px;border:1px solid #2a3550;
+    display:flex;align-items:center;justify-content:center;background:#0a1020;overflow:hidden;font-size:12px;color:#789}
+  #go{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:3;background:#5ad1ff;border:0;color:#021;padding:12px 26px;border-radius:30px;font-weight:800;cursor:pointer}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="hud">ROUTING A SINGLE IMAGE THROUGH<br><span class="ms" id="hop">0</span> / 100 hops<br>elapsed: <span id="ms">0</span> ms · <span id="loc">—</span></div>
+  <div id="img">image will load here</div>
+  <button id="go">⟳ Request the image again</button>
+  <script>
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H,land=[];function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;buildMap();}rs();addEventListener("resize",rs);
+  function buildMap(){land=[];for(let i=0;i<2600;i++){const lon=Math.random()*2-1,lat=Math.random()*2-1;
+    const n=Math.sin(lon*6)*Math.cos(lat*5+lon*3)+Math.sin(lat*8)*0.5;
+    if(n>0.2){land.push([(lon*0.5+0.5)*W,(lat*0.5+0.5)*H]);}}}
+  const CITIES=["Ashburn US","Frankfurt DE","Singapore SG","São Paulo BR","Tokyo JP","London UK","Mumbai IN","Sydney AU","Cape Town ZA","Toronto CA","Dubai AE","Seoul KR","Stockholm SE","Santiago CL","Lagos NG"];
+  let nodes=[],trace=[],pkt=0,t0=0,running=false,packetPos=null;
+  function newRoute(){
+    nodes=[];for(let i=0;i<100;i++){const p=land.length?land[(Math.random()*land.length)|0]:[Math.random()*W,Math.random()*H];
+      nodes.push({x:p[0]+(Math.random()*20-10),y:p[1]+(Math.random()*20-10),city:CITIES[(Math.random()*CITIES.length)|0]});}
+    trace=nodes.slice();pkt=0;t0=performance.now();running=true;packetPos={x:trace[0].x,y:trace[0].y};
+    document.getElementById("img").innerHTML="◌ loading…";document.getElementById("img").style.background="#0a1020";
+  }
+  let segStart=0;
+  function frame(){
+    requestAnimationFrame(frame);
+    x.fillStyle="#04070f";x.fillRect(0,0,W,H);
+    // map
+    x.fillStyle="rgba(40,90,140,.5)";for(const p of land)x.fillRect(p[0],p[1],1.6,1.6);
+    if(running){
+      // draw completed trace
+      x.strokeStyle="rgba(90,209,255,.5)";x.lineWidth=1.5;x.beginPath();
+      for(let i=0;i<=pkt&&i<trace.length;i++){const n=trace[i];i?x.lineTo(n.x,n.y):x.moveTo(n.x,n.y);}x.stroke();
+      // hops
+      for(let i=0;i<=pkt&&i<trace.length;i++){x.fillStyle="#2a6cff";x.beginPath();x.arc(trace[i].x,trace[i].y,2.5,0,7);x.fill();}
+      // animate packet toward next node
+      if(pkt<trace.length-1){
+        const a=trace[pkt],b=trace[pkt+1];
+        segStart+= 0.10;
+        packetPos.x=a.x+(b.x-a.x)*Math.min(1,segStart);
+        packetPos.y=a.y+(b.y-a.y)*Math.min(1,segStart);
+        if(segStart>=1){segStart=0;pkt++;}
+        document.getElementById("hop").textContent=pkt+1;
+        document.getElementById("loc").textContent="…"+trace[pkt].city;
+        document.getElementById("ms").textContent=Math.round(performance.now()-t0);
+      } else if(running){
+        running=false;
+        document.getElementById("img").innerHTML="";
+        document.getElementById("img").style.background="linear-gradient(135deg,#5ad1ff,#a98bff,#ff7ab8)";
+        const lbl=document.createElement("div");lbl.textContent="🖼 1 image · "+Math.round(performance.now()-t0)+"ms";lbl.style.cssText="color:#021;font-weight:800;text-shadow:0 1px 2px #fff";
+        document.getElementById("img").appendChild(lbl);
+      }
+      // glowing packet
+      if(packetPos){const g=x.createRadialGradient(packetPos.x,packetPos.y,0,packetPos.x,packetPos.y,10);
+        g.addColorStop(0,"#fff");g.addColorStop(1,"rgba(90,209,255,0)");x.fillStyle=g;x.beginPath();x.arc(packetPos.x,packetPos.y,10,0,7);x.fill();}
+    }
+  }
+  buildMap();frame();newRoute();
+  document.getElementById("go").onclick=newRoute;
+  </script>
+</body></html>

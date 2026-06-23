@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Glitch Dimension</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#000}
+  #stage{position:relative;height:100%;overflow:auto}
+  #gl{position:fixed;inset:0;z-index:5;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity .6s}
+  body.corrupt #gl{opacity:.85}
+  #pixel{position:absolute;width:5px;height:5px;background:#0f0;opacity:.25;z-index:7;cursor:crosshair;border-radius:1px}
+  body.corrupt .wrap{animation:none}
+  .scram{font-family:"Consolas",monospace}
+</style></head>
+<body>
+  <div id="stage"><div class="wrap" id="content"></div><div id="pixel" title=""></div></div>
+  <canvas id="gl"></canvas>
+  <div class="hint">Somewhere on this page is a single <b>hidden pixel</b>. Find it. Click it. (it's greenish)</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#19d36a",brand:"THE STABLE TIMES",
+    title:"This Is a Perfectly Normal, Well-Behaved Webpage",blocks:12,
+    lede:"Nothing strange here. Please do not look for the pixel. There is no pixel. Everything is fine and will remain fine."});
+  // place the hidden pixel somewhere random down the page
+  const px=document.getElementById("pixel");
+  px.style.left=(40+Math.random()*(innerWidth-120))+"px";
+  px.style.top=(300+Math.random()*1600)+"px";
+
+  /* ---------- WebGL glitch shader backdrop ---------- */
+  const cv=document.getElementById("gl");
+  const gl=cv.getContext("webgl");
+  function rs(){cv.width=innerWidth;cv.height=innerHeight;gl&&gl.viewport(0,0,cv.width,cv.height);}
+  rs();addEventListener("resize",rs);
+  let prog;
+  if(gl){
+    const vsh=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+    const fsh=`precision highp float;uniform vec2 R;uniform float T;
+      float h(vec2 x){return fract(sin(dot(x,vec2(12.9898,78.233)))*43758.5453);}
+      void main(){
+        vec2 uv=gl_FragCoord.xy/R.xy;
+        float band=floor(uv.y*40.+sin(T*3.)*4.);
+        float g=h(vec2(band,floor(T*12.)));
+        float sh=(g-.5)*step(.82,h(vec2(band,floor(T*7.))))*0.4;
+        uv.x+=sh;
+        float scan=sin(uv.y*R.y*1.6)*0.08;
+        float r=h(vec2(floor(uv.x*120.+sh*60.),band+1.));
+        float bl=step(.93,h(vec2(floor(uv.x*30.),floor(uv.y*30.+T*5.))));
+        vec3 c=vec3(h(uv+T*.1),h(uv+.3-T*.07),h(uv*1.3-T*.05));
+        c=mix(c,vec3(0.,1.,.3),bl*.6);
+        c.r*=1.0+sh*3.0; c.b*=1.0-sh*2.0;
+        c+=scan;
+        gl_FragColor=vec4(c,0.5+0.5*bl+abs(sh));
+      }`;
+    function mk(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;}
+    prog=gl.createProgram();gl.attachShader(prog,mk(gl.VERTEX_SHADER,vsh));gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fsh));
+    gl.linkProgram(prog);gl.useProgram(prog);
+    const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const lp=gl.getAttribLocation(prog,"p");gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+  }
+  function glFrame(t){ if(gl&&prog){ gl.uniform2f(gl.getUniformLocation(prog,"R"),cv.width,cv.height);
+    gl.uniform1f(gl.getUniformLocation(prog,"T"),t*0.001); gl.drawArrays(gl.TRIANGLES,0,3);} requestAnimationFrame(glFrame);}
+  requestAnimationFrame(glFrame);
+
+  /* ---------- DOM corruption ---------- */
+  let corrupt=false;
+  px.addEventListener("click",()=>{ corrupt=true; document.body.classList.add("corrupt"); px.style.display="none";
+    document.querySelector(".hint").innerHTML="You let it in. <b>It's loose in the DOM now.</b>";
+    corruptLoop(); });
+  const CH="!<>-_\\/[]{}—=+*^?#01ÆØ▓▒░█☠";
+  const content=document.getElementById("content");
+  const originals=[...content.querySelectorAll("p,h1,h2,a,span,div,.btn")].map(e=>({e,t:e.textContent}));
+  function corruptLoop(){
+    if(!corrupt)return;
+    // jitter + RGB split
+    const jx=(Math.random()-.5)*14, jy=(Math.random()-.5)*8;
+    content.style.transform=`translate(${jx}px,${jy}px)`;
+    content.style.textShadow=`${(Math.random()*6-3)|0}px 0 #f0f, ${(Math.random()*6-3)|0}px 0 #0ff`;
+    content.style.filter=`hue-rotate(${Math.random()*360}deg) contrast(${1+Math.random()})`;
+    // scramble random elements
+    for(let i=0;i<6;i++){
+      const o=originals[(Math.random()*originals.length)|0];
+      if(!o||!o.t)continue;
+      o.e.classList.add("scram");
+      o.e.textContent=o.t.split("").map(c=>Math.random()<0.25?CH[(Math.random()*CH.length)|0]:c).join("");
+    }
+    setTimeout(corruptLoop, 60+Math.random()*60);
+  }
+  </script>
+</body></html>

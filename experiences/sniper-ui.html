@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Sniper UI</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;cursor:none}
+  #buy{position:fixed;width:14px;height:14px;background:#ff2e2e;border-radius:2px;z-index:15;
+    box-shadow:0 0 8px #ff2e2e}
+  #scope{position:fixed;width:260px;height:260px;border-radius:50%;z-index:20;pointer-events:none;
+    border:2px solid rgba(0,0,0,.6);box-shadow:0 0 0 3000px rgba(8,10,16,.78);transform:translate(-50%,-50%)}
+  #scope::before,#scope::after{content:"";position:absolute;background:rgba(255,40,40,.7)}
+  #scope::before{left:50%;top:8px;bottom:8px;width:1px;transform:translateX(-50%)}
+  #scope::after{top:50%;left:8px;right:8px;height:1px;transform:translateY(-50%)}
+  .tick{position:absolute;left:50%;width:1px;height:10px;background:rgba(255,40,40,.6);transform:translateX(-50%)}
+  #hud{position:fixed;left:16px;top:14px;z-index:21;font-family:"Segoe UI",sans-serif;font-weight:700;color:#9af;text-shadow:0 1px 3px #000}
+  #win{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;display:none;text-align:center;
+    font-family:"Segoe UI",sans-serif;color:#eee;background:rgba(8,10,16,.9);padding:30px;border-radius:14px}
+</style></head>
+<body>
+  <div class="wrap" id="content"></div>
+  <div id="buy"></div>
+  <div id="scope"><div class="tick" style="top:30px"></div><div class="tick" style="bottom:30px"></div></div>
+  <div id="hud">🎯 ZOOM <span id="z">4x</span> · SHOTS: <span id="s">0</span> · WIND: <span id="w">→</span></div>
+  <div id="win"><h2>🎯 DIRECT HIT</h2><div>You shot the Checkout button. The purchase went through.</div>
+    <a class="btn" id="rb" href="#" style="margin-top:14px">Buy again →</a></div>
+  <div class="hint">The <b>Checkout</b> button is 1px-ish and teleports twice a second. Snipe it through the scope.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#ff2e2e",brand:"PRECISION CHECKOUT",
+    title:"Complete Your Purchase by Hitting a Moving Target",blocks:8,
+    lede:"For security reasons the Checkout button relocates constantly. We provide a sniper scope. Good luck, operator."});
+  const scope=document.getElementById("scope"),buy=document.getElementById("buy");
+  let mx=innerWidth/2,my=innerHeight/2,shots=0;
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;scope.style.left=mx+"px";scope.style.top=my+"px";});
+  function teleport(){buy.style.left=(20+Math.random()*(innerWidth-60))+"px";buy.style.top=(70+Math.random()*(innerHeight-140))+"px";
+    document.getElementById("w").textContent=Math.random()<.5?"→":"←";}
+  teleport();setInterval(teleport,500);
+  addEventListener("mousedown",()=>{
+    shots++;document.getElementById("s").textContent=shots;
+    const r=buy.getBoundingClientRect();
+    if(Math.hypot(r.left+7-mx,r.top+7-my)<16){ document.getElementById("win").style.display="block"; }
+    else { // muzzle flash
+      const f=document.createElement("div");f.style.cssText=`position:fixed;left:${mx}px;top:${my}px;width:30px;height:30px;background:radial-gradient(#fff,transparent 70%);transform:translate(-50%,-50%);z-index:25;pointer-events:none`;
+      document.body.appendChild(f);setTimeout(()=>f.remove(),80);
+    }
+  });
+  document.getElementById("rb").addEventListener("click",e=>{e.preventDefault();document.getElementById("win").style.display="none";teleport();});
+  </script>
+</body></html>

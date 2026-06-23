@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Console.log() Text Adventure</title>
+<style>
+  html,body{margin:0;height:100%;background:#0c0c0c;color:#0f0;font-family:"Consolas",monospace;overflow:hidden}
+  #screen{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;text-align:center;padding:20px}
+  .blink{animation:b 1s steps(2) infinite}@keyframes b{50%{opacity:0}}
+  kbd{background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:2px 7px;color:#7f7}
+  #mirror{position:fixed;left:10px;bottom:10px;right:10px;max-height:36%;overflow:auto;font-size:12px;color:#3a3;border-top:1px dashed #1a3a1a;padding-top:6px}
+</style></head>
+<body>
+  <div id="screen">
+    <pre style="color:#0f0;font-size:13px">
+   ╔══════════════════════════════════════╗
+   ║   THE CONSOLE OF THE FORGOTTEN KEEP   ║
+   ╚══════════════════════════════════════╝
+    </pre>
+    <p>This game has no graphics. It is played entirely in your browser's <b>DevTools Console</b>.</p>
+    <p>Press <kbd>F12</kbd> (or <kbd>Ctrl/Cmd+Shift+J</kbd>), click the <b>Console</b> tab,<br>and type <span class="blink">help()</span> then hit Enter.</p>
+    <p style="color:#3a3;font-size:12px">(a transcript also prints below, in case your console is shy)</p>
+  </div>
+  <div id="mirror"></div>
+  <script>
+  // mirror console.log to the page too
+  const mir=document.getElementById("mirror");
+  const realLog=console.log.bind(console);
+  console.log=(...a)=>{realLog(...a);const line=a.map(x=>typeof x==="string"?x:JSON.stringify(x)).join(" ");
+    const d=document.createElement("div");d.textContent="› "+line;mir.appendChild(d);mir.scrollTop=mir.scrollHeight;};
+
+  const ROOMS={
+    gate:{desc:"You stand at a rusted gate. Paths lead north (courtyard) and east (a dark well).",exits:{north:"courtyard",east:"well"},items:["torch"]},
+    courtyard:{desc:"A moonlit courtyard. A locked iron door stands to the north. South returns to the gate.",exits:{south:"gate",north:"hall"},items:[],locked:{north:"key"}},
+    well:{desc:"A bottomless well. Something glints on a ledge. West goes back to the gate.",exits:{west:"gate"},items:["key"]},
+    hall:{desc:"The Great Hall. On a pedestal rests THE EXIT URL. You win by taking it. South returns to the courtyard.",exits:{south:"courtyard"},items:["the-url"]}
+  };
+  let here="gate",inv=[],won=false;
+  function look(){const r=ROOMS[here];console.log("📍 "+r.desc);if(r.items.length)console.log("   You see: "+r.items.join(", "));return "(type go('north'), take('item'), inventory(), or help())";}
+  function go(dir){const r=ROOMS[here];if(!r.exits[dir])return "🚫 You can't go "+dir+" from here.";
+    if(r.locked&&r.locked[dir]&&!inv.includes(r.locked[dir]))return "🔒 The "+dir+" door is locked. You need a "+r.locked[dir]+".";
+    here=r.exits[dir];console.log("🚶 You go "+dir+".");return look();}
+  function take(item){const r=ROOMS[here];const i=r.items.indexOf(item);if(i<0)return "🤷 There's no '"+item+"' here.";
+    r.items.splice(i,1);inv.push(item);
+    if(item==="the-url"){won=true;console.log("🏆 YOU WIN. The exit URL is: mansion://room-046/escaped");return "🏆 Adventure complete. Refresh to play again.";}
+    return "✅ You take the "+item+". (inventory: "+inv.join(", ")+")";}
+  function inventory(){return inv.length?"🎒 "+inv.join(", "):"🎒 Your pockets are empty.";}
+  function help(){console.log("COMMANDS:");console.log("  look()            — describe the room");console.log("  go('north')       — move (north/south/east/west)");console.log("  take('key')       — pick something up");console.log("  inventory()       — what you carry");console.log("  help()            — this");return look();}
+  window.look=look;window.go=go;window.take=take;window.inventory=inventory;window.help=help;
+  console.log("%c🗝  THE CONSOLE OF THE FORGOTTEN KEEP","color:#0f0;font-size:16px;font-weight:bold");
+  console.log("Type help() to begin your quest.");
+  look();
+  </script>
+</body></html>

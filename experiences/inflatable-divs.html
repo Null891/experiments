@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Inflatable Divs</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto}
+  .inflatable{transition:transform .18s cubic-bezier(.34,1.56,.64,1),border-radius .18s,box-shadow .18s;
+    transform-origin:center;will-change:transform;cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><text y="24" font-size="24">💨</text></svg>') 8 24, pointer;
+    position:relative}
+  .inflatable.puff{animation:wob .4s ease-in-out infinite}
+  @keyframes wob{0%,100%{rotate:-1.2deg}50%{rotate:1.2deg}}
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:30}
+  #pump{position:fixed;left:16px;bottom:16px;z-index:9;font-family:"Segoe UI",sans-serif;color:#a8255f;font-weight:700}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <canvas id="fx"></canvas>
+  <div id="pump">💨 click anything to pump it full of air · pop them all</div>
+  <div class="hint">Click elements to <b>inflate</b> them — keep clicking until they <b>POP</b></div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#ff2e78",brand:"THE OVERINFLATED OBSERVER",
+    title:"Hot Air Is the Only Renewable Resource We Have Left",blocks:8,
+    lede:"Every paragraph below is a balloon waiting to happen. Pump responsibly. Or don't."});
+  // mark inflatables
+  document.querySelectorAll("#content p, #content h1, #content h2, #content .card, #content blockquote, #content .btn, #content .brand")
+    .forEach(el=>{el.classList.add("inflatable"); el.dataset.air="0";});
+
+  const fx=document.getElementById("fx"),g=fx.getContext("2d");
+  let W,H,DPR=Math.min(devicePixelRatio,2);
+  function size(){W=innerWidth;H=innerHeight;fx.width=W*DPR;fx.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0);}
+  size();addEventListener("resize",size);
+  let bits=[];
+
+  function pop(el){
+    const r=el.getBoundingClientRect();
+    const col=getComputedStyle(el).backgroundColor;
+    const c=(col&&col!=="rgba(0, 0, 0, 0)")?col:"#ff2e78";
+    for(let i=0;i<60;i++){
+      const a=Math.random()*7, sp=2+Math.random()*9;
+      bits.push({x:r.left+r.width/2,y:r.top+r.height/2,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,
+        life:1,r:3+Math.random()*7,c,rot:Math.random()*7,vr:(Math.random()-.5)*.4});
+    }
+    el.style.transition="transform .08s"; el.style.transform="scale(0)"; el.style.opacity="0";
+    setTimeout(()=>el.style.display="none",120);
+    checkWin();
+  }
+  document.getElementById("content").addEventListener("click",e=>{
+    const el=e.target.closest(".inflatable"); if(!el||el.style.display==="none")return;
+    let air=(+el.dataset.air)+1; el.dataset.air=air;
+    const s=1+air*0.16, skew=Math.sin(air)*2;
+    el.style.transform=`scale(${s}) skewX(${skew}deg)`;
+    el.style.borderRadius=Math.min(50,air*8)+"px";
+    el.style.boxShadow=`0 ${air*3}px ${air*8}px rgba(0,0,0,.18), inset 0 0 ${air*6}px rgba(255,255,255,.5)`;
+    el.style.background=el.style.background||"#fff";
+    el.classList.add("puff");
+    // hiss
+    if(air>=6) pop(el);
+  });
+  function checkWin(){
+    const left=[...document.querySelectorAll(".inflatable")].filter(e=>e.style.display!=="none");
+    if(left.length===0){
+      const d=document.createElement("div");
+      d.style.cssText="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:40;text-align:center;font-family:Segoe UI,sans-serif;color:#a8255f";
+      d.innerHTML="<h2>💥 You popped the entire page.</h2><div>It deflated into the next one.</div><a class='btn' href='#' id='rb' style='margin-top:14px'>Inflate a fresh page →</a>";
+      document.body.appendChild(d);
+      document.getElementById("rb").addEventListener("click",ev=>{ev.preventDefault();location.reload();});
+    }
+  }
+  function frame(){
+    g.clearRect(0,0,W,H);
+    bits=bits.filter(p=>p.life>0);
+    bits.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.25;p.vx*=0.99;p.life-=0.018;p.rot+=p.vr;
+      g.save();g.globalAlpha=Math.max(0,p.life);g.translate(p.x,p.y);g.rotate(p.rot);
+      g.fillStyle=p.c;g.beginPath();g.ellipse(0,0,p.r,p.r*0.6,0,0,7);g.fill();g.restore();});
+    requestAnimationFrame(frame);
+  }
+  frame();
+  </script>
+</body></html>

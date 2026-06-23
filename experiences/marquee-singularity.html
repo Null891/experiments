@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Marquee Singularity</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#101018}
+  #stage{height:100%;overflow:hidden;position:relative}
+  .mq{position:relative;white-space:nowrap;display:inline-block}
+  @keyframes mh{from{transform:translateX(0)}to{transform:translateX(var(--d))}}
+  @keyframes mv{from{transform:translateY(0)}to{transform:translateY(var(--d))}}
+  #content{padding:30px}
+  #content *{overflow:visible!important}
+  .blink{animation:bl .6s steps(2) infinite}@keyframes bl{50%{opacity:0}}
+</style></head>
+<body>
+  <div id="stage"><div class="wrap" id="content"></div></div>
+  <div class="hint">It is 1998 and every single element is a <b>&lt;marquee&gt;</b>. Good luck reading anything.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#ff0",brand:"★彡 MARQUEE WORLD 彡★",
+    title:"Welcome to My Homepage Everything Here Moves Forever",blocks:9,
+    lede:"Best viewed in Netscape Navigator at 800x600. Please sign my guestbook. Do not stop scrolling. You cannot stop scrolling."});
+  // turn every element into an independently-marqueeing thing
+  const els=[...document.querySelectorAll("#content *")];
+  els.forEach((e,i)=>{
+    if(e.children.length>3 && e.tagName!=="NAV") return; // keep some containers still-ish
+    const horiz=Math.random()<0.6;
+    const dur=(3+Math.random()*9).toFixed(1)+"s";
+    const dist=(horiz?1:0)?((Math.random()<.5?-1:1)*(40+Math.random()*120)):0;
+    e.style.display="inline-block";
+    e.style.setProperty("--d",(horiz? (Math.random()<.5?"-":"")+(60+Math.random()*200)+"px" : (Math.random()<.5?"-":"")+(30+Math.random()*120)+"px"));
+    e.style.animation=`${horiz?"mh":"mv"} ${dur} ${Math.random()<.5?"linear":"ease-in-out"} infinite alternate`;
+    if(Math.random()<0.25)e.classList.add("blink");
+    if(Math.random()<0.3)e.style.color=`hsl(${Math.random()*360},100%,60%)`;
+  });
+  // floating under-construction + skull GIF-likes drawn with emoji
+  const deco=["🚧","💀","🔥","⭐","👽","📟","💿","🌐","✉️","🏗️"];
+  for(let i=0;i<14;i++){const d=document.createElement("div");d.textContent=deco[i%deco.length];
+    d.style.cssText=`position:fixed;font-size:${24+Math.random()*30}px;left:${Math.random()*90}vw;top:${Math.random()*90}vh;z-index:3;pointer-events:none;
+    --d:${(Math.random()<.5?"-":"")+(80+Math.random()*200)}px;animation:${Math.random()<.5?"mh":"mv"} ${(2+Math.random()*6).toFixed(1)}s linear infinite alternate`;
+    document.body.appendChild(d);}
+  document.body.style.background="repeating-linear-gradient(45deg,#101018,#101018 12px,#16161f 12px,#16161f 24px)";
+  </script>
+</body></html>

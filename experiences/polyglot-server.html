@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Polyglot Server</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d1117;color:#cfe;font-family:"Consolas",monospace;overflow:hidden}
+  #wrap{max-width:860px;margin:0 auto;height:100%;display:flex;flex-direction:column;padding:16px}
+  h2{font-family:"Segoe UI";margin:4px 0}
+  #req{display:flex;gap:8px;margin:10px 0}
+  #req button{background:#238636;border:0;color:#fff;padding:11px 20px;border-radius:8px;font-weight:800;cursor:pointer}
+  #lang{font-size:14px;padding:8px 12px;border-radius:8px}
+  #resp{flex:1;overflow:auto;background:#0a0d13;border:1px solid #21262d;border-radius:10px;padding:14px;white-space:pre;font-size:13px;line-height:1.5}
+  #serverlog{height:120px;overflow:auto;background:#0a0d13;border:1px solid #21262d;border-radius:10px;padding:10px;font-size:11px;color:#7c9;margin-top:8px}
+  .k{color:#ff7b72}.s{color:#a5d6ff}.n{color:#79c0ff}.c{color:#8b949e}
+</style></head>
+<body>
+  <div id="wrap">
+    <h2>🌐 The Polyglot Server <small style="color:#789;font-family:Segoe UI;font-weight:400">— same endpoint, random backend language each request</small></h2>
+    <div id="req"><button id="go">GET /api/user/42</button><span id="lang"></span></div>
+    <div id="resp"></div>
+    <div id="serverlog"></div>
+  </div>
+  <script>
+  // the same logical data, formatted the way each language's ecosystem tends to
+  const DATA={id:42,name:"Ada Lovelace",created:new Date("2024-01-15T09:30:00Z"),active:true,balance:1337.5,tags:["admin","beta"]};
+  const LANGS={
+    "Node.js / Express":{color:"#3c873a",fmt(d){return hl(`{
+  "id": ${d.id},
+  "name": ${q(d.name)},
+  "createdAt": "${d.created.toISOString()}",
+  "isActive": ${d.active},
+  "balance": ${d.balance},
+  "tags": [${d.tags.map(q).join(", ")}]
+}`);},log:"express: 200 GET /api/user/42 - 3ms — camelCase, ISO dates, JSON.stringify(obj,null,2)"},
+    "Python / FastAPI":{color:"#ffd43b",fmt(d){return hl(`{
+    "id": ${d.id},
+    "name": ${q(d.name)},
+    "created_at": "${d.created.toISOString().replace("T"," ").replace("Z","+00:00")}",
+    "is_active": ${d.active?"true":"true"},
+    "balance": ${d.balance},
+    "tags": [${d.tags.map(q).join(", ")}]
+}`);},log:"uvicorn: 200 OK — snake_case keys, 4-space indent, datetime with tz offset"},
+    "Go / net/http":{color:"#00add8",fmt(d){return hl(`{"id":${d.id},"name":${q(d.name)},"createdAt":"${d.created.toISOString()}","isActive":${d.active},"balance":${d.balance},"tags":[${d.tags.map(q).join(",")}]}`);},
+      log:"go: 200 — minified, no whitespace (encoding/json default), CamelCase via struct tags"},
+    "Rust / Actix":{color:"#dea584",fmt(d){return hl(`{
+  "id": ${d.id},
+  "name": ${q(d.name)},
+  "created_at": "${d.created.toISOString()}",
+  "is_active": ${d.active},
+  "balance": ${d.balance.toFixed(2)},
+  "tags": [
+    ${d.tags.map(q).join(",\n    ")}
+  ]
+}`);},log:"actix-web: 200 — serde_json::to_string_pretty, snake_case, balance as fixed Decimal"},
+    "PHP / Laravel":{color:"#777bb3",fmt(d){return hl(`{
+    "data": {
+        "id": ${d.id},
+        "name": ${q(d.name)},
+        "created_at": "${d.created.toISOString().slice(0,19).replace("T"," ")}",
+        "active": ${d.active?1:0},
+        "balance": "${d.balance}",
+        "tags": [${d.tags.map(q).join(",")}]
+    }
+}`);},log:"laravel: 200 — wrapped in {data:...}, active as 1/0, balance as STRING (classic), MySQL datetime"},
+    "Java / Spring":{color:"#f89820",fmt(d){return hl(`{
+  "id" : ${d.id},
+  "name" : ${q(d.name)},
+  "createdAt" : ${d.created.getTime()},
+  "active" : ${d.active},
+  "balance" : ${d.balance},
+  "tags" : [ ${d.tags.map(q).join(", ")} ]
+}`);},log:"spring-boot: 200 — Jackson formatting (space before colon), epoch millis for dates"}
+  };
+  function q(s){return '<span class="s">"'+s+'"</span>';}
+  function hl(s){return s.replace(/("(?:[^"\\]|\\.)*")(\s*:)/g,'<span class="s">$1</span>$2')
+    .replace(/: (true|false)/g,': <span class="k">$1</span>')
+    .replace(/: (-?\d+\.?\d*)/g,': <span class="n">$1</span>');}
+  const names=Object.keys(LANGS);let last=null;
+  function go(){
+    let pick;do{pick=names[(Math.random()*names.length)|0];}while(pick===last&&names.length>1);last=pick;
+    const L=LANGS[pick];
+    document.getElementById("lang").innerHTML="handled by <b style='color:"+L.color+"'>"+pick+"</b>";
+    document.getElementById("resp").innerHTML=L.fmt(DATA);
+    const log=document.getElementById("serverlog");const d=document.createElement("div");
+    d.innerHTML='<span class="c">['+new Date().toLocaleTimeString()+']</span> '+L.log;log.insertBefore(d,log.firstChild);
+  }
+  document.getElementById("go").onclick=go;go();
+  </script>
+</body></html>

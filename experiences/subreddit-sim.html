@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Subreddit Simulator Live</title>
+<style>
+  html,body{margin:0;height:100%;background:#dae0e6;color:#1a1a1b;font-family:"Segoe UI",Helvetica,sans-serif;overflow:auto}
+  #hd{background:#ff4500;color:#fff;padding:8px 16px;font-weight:800;position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center}
+  #wrap{max-width:740px;margin:14px auto;padding:0 10px}
+  .post{background:#fff;border:1px solid #ccc;border-radius:6px;padding:10px 12px;margin-bottom:12px}
+  .post h3{margin:.2em 0;font-size:18px}
+  .meta{color:#7c7c7c;font-size:12px}
+  .vote{display:inline-block;color:#ff4500;font-weight:700;margin-right:6px}
+  .comments{margin-top:10px}
+  .cmt{border-left:2px solid #edeff1;padding:4px 0 4px 10px;margin:6px 0 6px 4px;font-size:14px}
+  .cmt .u{font-weight:700;color:#0079d3;font-size:12px}
+  .cmt.bot .u::after{content:" 🤖";font-size:10px}
+  .cmt .sc{color:#7c7c7c;font-size:11px;margin-left:6px}
+  .nest{margin-left:16px}
+  #live{margin-left:auto;font-size:12px;background:#0a0;padding:2px 8px;border-radius:10px}
+</style></head>
+<body>
+  <div id="hd">🔴 r/SimulatedDrama <span style="font-weight:400;opacity:.9">· bots arguing in real time</span><span id="live">● LIVE</span></div>
+  <div id="wrap" id="feed"></div>
+  <script src="_shared.js"></script>
+  <script>
+  const USERS=["xX_DataGoblin_Xx","unfortunate_pickle","ACTUAL_lawyer_maybe","Thaw_Enjoyer_99","mod_alt_account","quietStorm_42","bread_theory","not_a_bot_promise","velveteen_rabies","CitationNeeded_","doomscroll_dave","gigawatt_gary"];
+  const TITLES=["Unpopular opinion: the footer is the most important part of any website","AITA for closing 47 tabs without reading them?","TIL websites used to just... sit still","My landlord replaced the door with a 3D zipper","Why does every site want to breathe now??","Petition to ban infinite scroll (long, you won't reach the end)","Found a hidden pixel. Should I click it? (URGENT)","The mansion has 100 rooms and I've only survived 6"];
+  const ARG=["Source? You literally made that up.","This is the most reddit comment I've ever read and I hate that I agree.","Found the bot.","ok but consider: no","Deleting my account after reading this. See you tomorrow.","This guy gets it. Everyone else is wrong.","Actually, and I cannot stress this enough, no.","Updoot for visibility, downdoot for vibes.","We are NOT the same.","Bold of you to assume I read past the title.","🤓☝️ well actually","This blew up, RIP my inbox (3 replies)","Take my angry upvote.","I came here to argue and I'm leaving validated."];
+  const feed=document.getElementById("wrap");
+  const r=a=>a[(Math.random()*a.length)|0];
+  function votes(){return (Math.random()*8000|0);}
+  function makeComment(depth){
+    const d=document.createElement("div");d.className="cmt bot"+(depth?" nest":"");
+    d.innerHTML=`<span class="u">u/${r(USERS)}</span><span class="sc">${(Math.random()*900-100|0)} points · just now</span><div>${r(ARG)}</div>`;
+    return d;
+  }
+  function makePost(){
+    const p=document.createElement("div");p.className="post";
+    p.innerHTML=`<div class="meta">Posted by u/${r(USERS)} · ${(Math.random()*23|0)+1}h</div>
+      <h3>${r(TITLES)}</h3>
+      <div>${MX.para(2)}</div>
+      <div class="meta" style="margin-top:6px"><span class="vote">▲ ${votes()}</span> ${(Math.random()*400|0)} comments · share · save</div>
+      <div class="comments"></div>`;
+    const cwrap=p.querySelector(".comments");
+    const n=2+(Math.random()*3|0);for(let i=0;i<n;i++){cwrap.appendChild(makeComment(0));if(Math.random()<0.6)cwrap.appendChild(makeComment(1));}
+    return p;
+  }
+  for(let i=0;i<4;i++)feed.appendChild(makePost());
+  // live bot activity: occasionally add a comment to a random post, or a new post
+  setInterval(()=>{
+    if(Math.random()<0.25){feed.insertBefore(makePost(),feed.firstChild);}
+    else{const posts=[...document.querySelectorAll(".post .comments")];if(posts.length){const c=r(posts);const cm=makeComment(Math.random()<0.5?1:0);
+      cm.style.background="#fffceb";c.appendChild(cm);setTimeout(()=>cm.style.background="",1500);}}
+    // keep it from growing forever
+    const all=document.querySelectorAll(".post");if(all.length>14)all[all.length-1].remove();
+  },1400);
+  </script>
+</body></html>

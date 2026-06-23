@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Burning Paper</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%}
+  body{background:#1a120b}
+  #scroller{height:100%;overflow-y:scroll;position:relative;background:var(--paper)}
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:8}
+  #gauge{position:fixed;right:16px;top:16px;z-index:9;width:140px;font-family:"Segoe UI",sans-serif;color:#3a2a1a}
+  #gauge .bar{height:10px;border:1px solid #b06a2a;border-radius:6px;overflow:hidden;background:#fff}
+  #gauge .fill{height:100%;width:0;background:linear-gradient(90deg,#ffd23f,#ff7a2f,#d62828)}
+  #gauge .lab{font-size:11px;margin-bottom:4px;font-weight:700}
+  #reload{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;display:none;text-align:center;
+    font-family:"Segoe UI",sans-serif;color:#ffd9a8}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <canvas id="fx"></canvas>
+  <div id="gauge"><div class="lab">SCROLL FRICTION 🔥</div><div class="bar"><div class="fill" id="fill"></div></div></div>
+  <div id="reload"><h2>It all burned.</h2><div>You scrolled too greedily and the page caught fire.</div>
+    <a class="btn" id="rb" href="#" style="margin-top:14px">Bring it back from the ashes</a></div>
+  <div class="hint">Scroll <b>fast</b> and friction ignites the page from the bottom up</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#d62828",brand:"THE KINDLING REVIEW",
+    title:"Read Gently, For Paper Remembers Heat",blocks:14,
+    lede:"Scroll like you mean it and the page will punish your haste. Friction is real, even here. Especially here."});
+
+  const fx=document.getElementById("fx"), g=fx.getContext("2d");
+  let W,H,DPR=Math.min(devicePixelRatio,2);
+  function size(){W=innerWidth;H=innerHeight;fx.width=W*DPR;fx.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0);}
+  size(); addEventListener("resize",size);
+
+  const sc=document.getElementById("scroller");
+  let heat=0, lastY=0, lastT=performance.now(), burning=false, burnLine=H, embers=[], ash=[];
+  sc.addEventListener("scroll",()=>{
+    const now=performance.now(), y=sc.scrollTop, dt=Math.max(16,now-lastT);
+    const v=Math.abs(y-lastY)/dt; // px per ms
+    lastY=y; lastT=now;
+    if(!burning){ heat=Math.min(1, heat + Math.max(0, v-0.9)*0.16); }
+    if(heat>=1 && !burning) ignite();
+  });
+  function ignite(){ burning=true; burnLine=H+30; document.querySelector(".hint").style.display="none"; }
+
+  function spawnEmber(x,y){ embers.push({x,y,vx:(Math.random()-.5)*0.6,vy:-(0.6+Math.random()*1.6),life:1,r:1+Math.random()*2.4,hue:20+Math.random()*30}); }
+  function spawnAsh(x,y){ ash.push({x,y,vx:(Math.random()-.5)*0.5,vy:-(0.2+Math.random()*0.8),life:1,r:1+Math.random()*2,rot:Math.random()*6,vr:(Math.random()-.5)*.2}); }
+
+  function frame(){
+    g.clearRect(0,0,W,H);
+    document.getElementById("fill").style.width=(heat*100)+"%";
+    if(!burning){ heat=Math.max(0,heat-0.004); }
+    else {
+      burnLine-=2.2; // fire climbs
+      // mask the page: everything below burnLine is burned away
+      const burnedPx=Math.max(0,H-burnLine);
+      document.getElementById("content").parentElement.style.webkitMaskImage=
+        `linear-gradient(to top, transparent ${burnedPx}px, rgba(0,0,0,.15) ${burnedPx+18}px, #000 ${burnedPx+60}px)`;
+      // ragged flame edge + glow at burnLine
+      const grd=g.createLinearGradient(0,burnLine-90,0,burnLine+40);
+      grd.addColorStop(0,"rgba(255,120,40,0)");grd.addColorStop(.7,"rgba(255,120,30,.28)");grd.addColorStop(1,"rgba(120,30,0,.55)");
+      g.fillStyle=grd; g.fillRect(0,burnLine-90,W,140);
+      g.save(); g.globalCompositeOperation="lighter";
+      for(let x=0;x<W;x+=6){
+        const flick=Math.sin(x*0.05+performance.now()*0.01)*8 + Math.random()*22;
+        const fy=burnLine - flick;
+        const fg=g.createRadialGradient(x,fy,0,x,fy,18);
+        fg.addColorStop(0,"rgba(255,230,120,.9)");fg.addColorStop(.4,"rgba(255,120,30,.6)");fg.addColorStop(1,"rgba(255,60,0,0)");
+        g.fillStyle=fg; g.beginPath(); g.arc(x,fy,18,0,7); g.fill();
+        if(Math.random()<0.4) spawnEmber(x,fy);
+        if(Math.random()<0.25) spawnAsh(x,fy+4);
+      }
+      g.restore();
+      if(burnLine< -60){ document.getElementById("reload").style.display="block"; }
+    }
+    // embers
+    g.save(); g.globalCompositeOperation="lighter";
+    embers=embers.filter(p=>p.life>0);
+    embers.forEach(p=>{ p.x+=p.vx;p.y+=p.vy;p.vy-=0.005;p.life-=0.014;
+      g.fillStyle=`hsla(${p.hue},100%,60%,${p.life})`; g.beginPath(); g.arc(p.x,p.y,p.r,0,7); g.fill(); });
+    g.restore();
+    // ash
+    ash=ash.filter(p=>p.life>0);
+    ash.forEach(p=>{ p.x+=p.vx;p.y+=p.vy;p.vy+=0.004;p.vx+=Math.sin(p.y*0.05)*0.01;p.life-=0.006;p.rot+=p.vr;
+      g.save(); g.translate(p.x,p.y); g.rotate(p.rot); g.fillStyle=`rgba(40,38,36,${p.life*0.8})`;
+      g.fillRect(-p.r,-p.r,p.r*2,p.r*2); g.restore(); });
+    requestAnimationFrame(frame);
+  }
+  frame();
+  document.getElementById("rb").addEventListener("click",e=>{e.preventDefault(); location.reload();});
+  </script>
+</body></html>

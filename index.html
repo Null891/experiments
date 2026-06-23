@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>The Mansion — 75 unruly websites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hub.css" />
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+
+  <div id="crosshair"></div>
+  <div id="counter"></div>
+  <div id="hud">
+    <div><b>W A S D</b> move &nbsp; <b>Mouse</b> look &nbsp; <b>Shift</b> sprint</div>
+    <div><b>E</b> / <b>Click</b> enter &nbsp; <b>Tab</b> room list &nbsp; <b>M</b> map &nbsp; <b>Esc</b> release</div>
+  </div>
+
+  <div id="prompt">
+    <div class="pname"></div>
+    <div class="pblurb"></div>
+    <div class="pkey">Press <b>E</b> or <b>Click</b> to enter</div>
+  </div>
+
+  <div id="minimapWrap">
+    <div class="cap">the halls</div>
+    <canvas id="minimap" width="196" height="196"></canvas>
+  </div>
+
+  <div id="dirBtn"><b>Tab</b> &nbsp;Room directory</div>
+
+  <div id="directory">
+    <div class="dir-inner">
+      <div class="dir-head">
+        <h3>The Directory of Doors</h3>
+        <div class="hint">Search all 75 rooms — click any card to teleport there (and aim you at its portal).</div>
+        <input id="dirSearch" placeholder="Type to filter… e.g. 'shatter', 'maze', 'AI', 'snake'" autocomplete="off" />
+      </div>
+      <div id="dirList"></div>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <div id="loadbar"></div>
+    <div id="overlayBar">
+      <div id="backBtn">⟵ Back to the Mansion (Esc)</div>
+      <div id="overlayTitle"></div>
+    </div>
+    <iframe id="expframe" title="experience" allow="accelerometer; gyroscope; microphone; camera"></iframe>
+  </div>
+
+  <div id="splash">
+    <h1>THE MANSION</h1>
+    <div class="sub">75 doors · 75 unruly websites</div>
+    <p>Behind each door, a website that behaves like nothing you've used before —
+       pages that <b>tear</b>, <b>shatter</b>, <b>burn</b>, inflate, dissolve into sand, fight back,
+       race you, judge you, or fold through the <b>fourth dimension</b>. Walk the halls. Open everything.
+       The last door is waiting.</p>
+    <div class="keys">
+      <span><b>W A S D</b>Move</span><span><b>Mouse</b>Look</span>
+      <span><b>E / Click</b>Enter</span><span><b>Tab</b>Room list</span><span><b>Click map</b>Teleport</span>
+    </div>
+    <button id="enterBtn">Enter the Mansion</button>
+    <div id="loadnote">Best on a desktop with a big screen. Click the scene to capture your cursor.</div>
+  </div>
+
+  <div class="reveal" id="reveal"></div>
+
+  <script src="js/registry.js"></script>
+  <script type="module" src="js/hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "the-mansion",
+  "version": "1.0.0",
+  "description": "A 3D mansion of 75 rooms, each an experimental website that misbehaves.",
+  "main": "serve.js",
+  "scripts": {
+    "start": "node serve.js",
+    "serve": "node serve.js",
+    "test": "node test/smoke.js"
+  },
+  "keywords": ["webgl", "three.js", "creative-coding", "experimental-ui"],
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "puppeteer-core": "^25.2.0"
+  }
+}

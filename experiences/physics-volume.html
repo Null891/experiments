@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Physics Volume Slider</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0e1118;font-family:"Segoe UI",sans-serif;color:#dfe}
+  #c{position:fixed;inset:0}
+  #panel{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);z-index:3;text-align:center}
+  .btn{background:#3b7;border:0;color:#021;padding:12px 28px;border-radius:8px;font-weight:800;font-size:16px;cursor:pointer}
+  #read{font-size:40px;font-weight:800;color:#6fd}
+  #target{font-size:14px;color:#fc8}
+  .hint{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:3;font-size:13px;background:rgba(10,12,20,.6);padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="hint">Grab the pendulum knob, <b>throw</b> it, then hit <b>Save</b> the instant it swings past your target volume</div>
+  <div id="panel">
+    <div id="read">VOL 50</div>
+    <div id="target">🎯 set the volume to exactly 70</div>
+    <button class="btn" id="save">SAVE VOLUME</button>
+    <div id="result" style="margin-top:10px;height:22px;font-weight:700"></div>
+  </div>
+  <script>
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
+  const pivot=()=>({x:W/2,y:H*0.32});
+  const LEN=()=>Math.min(W,H)*0.32;
+  let ang=0.9, av=0, dragging=false, target=70;
+  // audio for feedback
+  let ac,osc,gain;
+  function audio(){if(ac)return;ac=new (window.AudioContext||window.webkitAudioContext)();osc=ac.createOscillator();gain=ac.createGain();
+    osc.frequency.value=220;gain.gain.value=0;osc.connect(gain).connect(ac.destination);osc.start();}
+  function knobPos(){const p=pivot();return{x:p.x+Math.sin(ang)*LEN(),y:p.y+Math.cos(ang)*LEN()};}
+  function vol(){return Math.round(Math.max(0,Math.min(100,(ang+1.4)/2.8*100)));}
+  let mx=0,my=0,lastAng=ang,lastT=performance.now();
+  addEventListener("mousedown",e=>{const k=knobPos();if(Math.hypot(e.clientX-k.x,e.clientY-k.y)<40){dragging=true;av=0;audio();ac.resume();}});
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;});
+  addEventListener("mouseup",()=>{dragging=false;});
+  document.getElementById("save").onclick=()=>{const v=vol();const diff=Math.abs(v-target);
+    const r=document.getElementById("result");
+    if(diff===0){r.textContent="✓ PERFECT. Exactly "+target+".";r.style.color="#6f6";}
+    else if(diff<=2){r.textContent="So close: "+v+" (off by "+diff+")";r.style.color="#fc6";}
+    else{r.textContent="✗ "+v+". Off by "+diff+". Throw it again.";r.style.color="#f88";target=20+Math.floor(Math.random()*70);document.getElementById("target").textContent="🎯 set the volume to exactly "+target;}
+  };
+  function frame(){
+    requestAnimationFrame(frame);
+    const p=pivot();
+    if(dragging){const k={x:mx-p.x,y:my-p.y};ang=Math.atan2(k.x,k.y);
+      const now=performance.now();av=(ang-lastAng)/((now-lastT)/16)||0;lastAng=ang;lastT=now;}
+    else{const g=0.012;av+=-g*Math.sin(ang);av*=0.995;ang+=av;}
+    const v=vol();
+    document.getElementById("read").textContent="VOL "+v;
+    if(gain)gain.gain.value=v/100*0.08;
+    if(osc)osc.frequency.value=180+v*6;
+    x.clearRect(0,0,W,H);
+    // arc gauge
+    x.strokeStyle="#1d2740";x.lineWidth=10;x.beginPath();x.arc(p.x,p.y,LEN(),Math.PI/2-1.4,Math.PI/2+1.4);x.stroke();
+    const k=knobPos();
+    x.strokeStyle="#3a4f7a";x.lineWidth=5;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(k.x,k.y);x.stroke();
+    x.fillStyle="#22304d";x.beginPath();x.arc(p.x,p.y,9,0,7);x.fill();
+    const grd=x.createRadialGradient(k.x,k.y,2,k.x,k.y,26);grd.addColorStop(0,"#9ff");grd.addColorStop(1,"#2a7");
+    x.fillStyle=grd;x.beginPath();x.arc(k.x,k.y,26,0,7);x.fill();
+    x.fillStyle="#021";x.font="bold 13px Segoe UI";x.textAlign="center";x.fillText(v,k.x,k.y+4);
+    // target tick
+    const ta=target/100*2.8-1.4;const tx=p.x+Math.sin(ta)*(LEN()+24),ty=p.y+Math.cos(ta)*(LEN()+24);
+    x.fillStyle="#fc8";x.beginPath();x.arc(tx,ty,6,0,7);x.fill();
+  }
+  frame();
+  </script>
+</body></html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Code City 3D</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#05070f;font-family:"Segoe UI",sans-serif;color:#bfe}
+  #c{position:fixed;inset:0}
+  #tip{position:fixed;z-index:3;pointer-events:none;background:rgba(8,12,24,.85);border:1px solid #2af;border-radius:8px;padding:6px 10px;font-size:12px;display:none;color:#cfe}
+  .hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2;font-size:13px;background:rgba(10,12,20,.7);padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="tip"></div>
+  <div class="hint"><b>Drag</b> orbit · <b>scroll</b> zoom · hover a tower to inspect its function · cars are variables in flight</div>
+  <script type="module">
+  import * as THREE from "three";
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x05070f);scene.fog=new THREE.Fog(0x05070f,40,140);
+  const cam=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,0.1,400);
+  scene.add(new THREE.AmbientLight(0x223355,1.1));
+  const moon=new THREE.DirectionalLight(0x88aaff,0.7);moon.position.set(20,40,10);scene.add(moon);
+
+  // stars
+  const sg=new THREE.BufferGeometry();const sp=[];for(let i=0;i<900;i++){const r=200;sp.push((Math.random()-.5)*r,Math.random()*80+20,(Math.random()-.5)*r);}
+  sg.setAttribute("position",new THREE.Float32BufferAttribute(sp,3));
+  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x88aaff,size:0.6})));
+
+  // ground
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x080b14,roughness:1}));
+  ground.rotation.x=-Math.PI/2;scene.add(ground);
+  const grid=new THREE.GridHelper(160,40,0x1b3a66,0x12233f);scene.add(grid);
+
+  // window texture
+  function winTex(hue){const s=64,cv=document.createElement("canvas");cv.width=cv.height=s;const g=cv.getContext("2d");
+    g.fillStyle="#0a0f1c";g.fillRect(0,0,s,s);
+    for(let y=4;y<s;y+=10)for(let x=4;x<s;x+=10){if(Math.random()<0.55){g.fillStyle=`hsl(${hue},90%,${50+Math.random()*30}%)`;g.fillRect(x,y,6,6);}}
+    const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
+
+  // "source code" → buildings. Function name => height (lines of code).
+  const NAMES=["renderDOM","authUser","hashBlock","parseQuery","mountReactTree","gcSweep","reduceState","tokenize","diffVnode","encryptAES","scheduleTask","resolvePromise","walkAST","paintFrame","allocBuffer","routeRequest","serializeJSON","compileShader","indexSearch","throttleScroll","memoize","vectorize","rasterize","bootstrapApp","deflate","quantize","traverseGraph","bindEvents"];
+  const towers=[];const N=10;
+  for(let gx=0;gx<N;gx++)for(let gz=0;gz<N;gz++){
+    const loc=8+Math.floor(Math.random()*Math.random()*120);
+    const h=1+loc*0.18;
+    const w=2.2+Math.random()*1.2;
+    const hue=200+Math.random()*80;
+    const geo=new THREE.BoxGeometry(w,h,w);
+    const mat=new THREE.MeshStandardMaterial({map:winTex(hue),emissive:new THREE.Color(`hsl(${hue},80%,12%)`),emissiveMap:winTex(hue),emissiveIntensity:1.4,roughness:.7});
+    mat.map.repeat.set(1,Math.max(1,h/2));mat.emissiveMap.repeat.set(1,Math.max(1,h/2));
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set((gx-N/2)*7+ (Math.random()-.5),h/2,(gz-N/2)*7+(Math.random()-.5));
+    m.userData={name:NAMES[(gx*N+gz)%NAMES.length],loc,file:`module_${gx}.js`};
+    scene.add(m);towers.push(m);
+  }
+
+  // cars = variables flying along streets
+  const cars=[];const carGeo=new THREE.BoxGeometry(0.5,0.25,1.1);
+  for(let i=0;i<60;i++){
+    const horiz=Math.random()<0.5;
+    const lane=(Math.floor(Math.random()*N)-N/2)*7;
+    const c=new THREE.Mesh(carGeo,new THREE.MeshStandardMaterial({color:0x111,emissive:new THREE.Color(`hsl(${Math.random()*360},90%,60%)`),emissiveIntensity:2}));
+    c.userData={horiz,lane,pos:(Math.random()-.5)*140,sp:(0.2+Math.random()*0.5)*(Math.random()<.5?1:-1)};
+    scene.add(c);cars.push(c);
+  }
+
+  // camera orbit controls
+  let yaw=0.6,pitch=0.5,dist=70,dragging=false,px=0,py=0;
+  addEventListener("mousedown",e=>{dragging=true;px=e.clientX;py=e.clientY;});
+  addEventListener("mouseup",()=>dragging=false);
+  addEventListener("mousemove",e=>{if(dragging){yaw-=(e.clientX-px)*0.005;pitch=Math.max(0.15,Math.min(1.4,pitch+(e.clientY-py)*0.005));px=e.clientX;py=e.clientY;}
+    mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1));mx=e.clientX;my=e.clientY;});
+  addEventListener("wheel",e=>{dist=Math.max(20,Math.min(140,dist+e.deltaY*0.05));},{passive:true});
+
+  const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let mx=0,my=0;const tip=document.getElementById("tip");
+  let autoYaw=true;addEventListener("mousedown",()=>autoYaw=false);
+
+  function loop(){
+    requestAnimationFrame(loop);
+    if(autoYaw)yaw+=0.0016;
+    cam.position.set(Math.sin(yaw)*Math.cos(pitch)*dist,Math.sin(pitch)*dist,Math.cos(yaw)*Math.cos(pitch)*dist);
+    cam.lookAt(0,4,0);
+    cars.forEach(c=>{c.userData.pos+=c.userData.sp;if(c.userData.pos>72)c.userData.pos=-72;if(c.userData.pos<-72)c.userData.pos=72;
+      if(c.userData.horiz)c.position.set(c.userData.pos,0.3,c.userData.lane);else c.position.set(c.userData.lane,0.3,c.userData.pos);});
+    // hover pick
+    ray.setFromCamera(mouse,cam);const hit=ray.intersectObjects(towers);
+    if(hit.length){const u=hit[0].object.userData;tip.style.display="block";tip.style.left=(mx+14)+"px";tip.style.top=(my+14)+"px";
+      tip.innerHTML=`<b style="color:#7af0ff">function ${u.name}()</b><br>${u.loc} lines · ${u.file}`;}
+    else tip.style.display="none";
+    renderer.render(scene,cam);
+  }
+  loop();
+  addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  </script>
+</body></html>

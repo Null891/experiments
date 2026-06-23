@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>4D Hypercube UI</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#05060f;font-family:"Segoe UI",sans-serif;color:#cfe0ff}
+  #c{position:fixed;inset:0}
+  #hud{position:fixed;left:14px;top:12px;z-index:2;font-size:13px;line-height:1.7;background:rgba(8,10,22,.5);padding:10px 14px;border-radius:10px}
+  #hud b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+  #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:3;background:#6a4dff;color:#fff;padding:10px 18px;border-radius:30px;opacity:0;transition:opacity .3s}
+  .hint{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:2;font-size:13px;background:rgba(10,12,20,.7);padding:8px 14px;border-radius:30px}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="hint">Drag to rotate in 3D · <b>Q</b>/<b>E</b> rotate through the <b>4th</b> dimension · click a glowing node</div>
+  <div id="hud">A tesseract: a cube of cubes.<br>The inner cube is the same size as the outer —<br>it only looks smaller because it is <i>further away in W</i>.</div>
+  <div id="toast"></div>
+  <script type="module">
+  import * as THREE from "three";
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x05060f,0.06);
+  const cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,100);cam.position.z=6;
+  scene.add(new THREE.AmbientLight(0x8899ff,1.2));
+  const pl=new THREE.PointLight(0xa06bff,1.5,40);pl.position.set(5,5,8);scene.add(pl);
+
+  // 16 vertices of a tesseract
+  const V4=[];for(let i=0;i<16;i++)V4.push([(i&1)?1:-1,(i&2)?1:-1,(i&4)?1:-1,(i&8)?1:-1]);
+  const edges=[];for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){let d=0;for(let k=0;k<4;k++)if(V4[i][k]!==V4[j][k])d++;if(d===1)edges.push([i,j]);}
+
+  const lineGeo=new THREE.BufferGeometry();
+  const linePos=new Float32Array(edges.length*2*3);
+  lineGeo.setAttribute("position",new THREE.BufferAttribute(linePos,3));
+  const lineMat=new THREE.LineBasicMaterial({color:0xa06bff,transparent:true,opacity:0.85});
+  const lines=new THREE.LineSegments(lineGeo,lineMat);scene.add(lines);
+
+  // vertex spheres; tag a few as nav nodes
+  const navLabels={0:"HOME",5:"ESSAYS",10:"THE LAB",15:"ABOUT",6:"ARCHIVE"};
+  const sphGeo=new THREE.SphereGeometry(0.075,16,16);
+  const verts=V4.map((_,i)=>{
+    const isNav=i in navLabels;
+    const m=new THREE.Mesh(sphGeo,new THREE.MeshStandardMaterial({
+      color:isNav?0x7af0ff:0xffffff,emissive:isNav?0x2266ff:0x111133,emissiveIntensity:isNav?1.2:0.3}));
+    if(isNav)m.scale.setScalar(1.8);
+    m.userData={i,isNav,label:navLabels[i]};scene.add(m);return m;});
+
+  let aXY=0.3,aZW=0,aXW=0,aYZ=0.2,dragXY=0,dragX=0,dragV=0,wV=0,dragging=false,px=0,py=0;
+  addEventListener("mousedown",e=>{dragging=true;px=e.clientX;py=e.clientY;});
+  addEventListener("mouseup",()=>dragging=false);
+  addEventListener("mousemove",e=>{if(dragging){dragV+=(e.clientY-py)*0.005;dragXY+=(e.clientX-px)*0.005;px=e.clientX;py=e.clientY;}});
+  const keys={};addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
+
+  function rot(p,a,b,ang){const c=Math.cos(ang),s=Math.sin(ang);const x=p[a],y=p[b];p[a]=x*c-y*s;p[b]=x*s+y*c;}
+  function project(){
+    const out=[];
+    for(const v of V4){
+      const p=v.slice();
+      rot(p,0,1,aXY);rot(p,2,3,aZW);rot(p,0,3,aXW);rot(p,1,2,aYZ);
+      const wDist=2.6;const w=1/(wDist-p[3]);      // 4D->3D perspective
+      out.push([p[0]*w*2.2,p[1]*w*2.2,p[2]*w*2.2]);
+    }
+    return out;
+  }
+  const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+  addEventListener("click",e=>{
+    if(Math.abs(e.clientX-px)>4)return;
+    mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1));
+    ray.setFromCamera(mouse,cam);
+    const hit=ray.intersectObjects(verts.filter(v=>v.userData.isNav));
+    if(hit.length){const t=document.getElementById("toast");t.textContent="Navigating to “"+hit[0].object.userData.label+"” — hidden inside dimension W";t.style.opacity="1";setTimeout(()=>t.style.opacity="0",1800);}
+  });
+
+  function loop(){
+    requestAnimationFrame(loop);
+    aXY+=0.004+dragXY*0.1;dragXY*=0.9;
+    aZW+=0.006+ (keys.q?-0.03:0)+(keys.e?0.03:0)+wV;wV*=0.92;
+    aYZ+=0.003+dragV*0.1;dragV*=0.9;
+    aXW+=0.0015;
+    const P=project();
+    let k=0;for(const[a,b]of edges){for(const idx of [a,b]){linePos[k++]=P[idx][0];linePos[k++]=P[idx][1];linePos[k++]=P[idx][2];}}
+    lineGeo.attributes.position.needsUpdate=true;
+    verts.forEach((m,i)=>{m.position.set(P[i][0],P[i][1],P[i][2]);
+      if(m.userData.isNav){m.material.emissiveIntensity=1+Math.sin(performance.now()*0.004+i)*0.5;}});
+    renderer.render(scene,cam);
+  }
+  loop();
+  addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  </script>
+</body></html>

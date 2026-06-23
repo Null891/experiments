@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Terms of Service Speedrun</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#f4f4f0;font-family:Georgia,serif;color:#222}
+  #pit{position:fixed;inset:0;overflow:hidden}
+  #legal{padding:20px 8vw;line-height:1.5;font-size:14px;color:#555;position:absolute;width:100%}
+  #accept{position:fixed;left:50%;transform:translateX(-50%);z-index:5;background:#1a7;color:#fff;border:0;
+    padding:14px 30px;border-radius:8px;font-weight:800;font-size:17px;cursor:pointer;font-family:"Segoe UI",sans-serif;
+    box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  #hud{position:fixed;left:16px;top:14px;z-index:6;font-family:"Segoe UI",sans-serif;font-weight:700;color:#a33}
+  #win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9;background:rgba(255,255,255,.94);text-align:center}
+  .btn{margin-top:14px;background:#1a7;color:#fff;border:0;padding:12px 24px;border-radius:8px;font-weight:800;cursor:pointer;font-family:"Segoe UI",sans-serif}
+  .hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;font-size:13px;font-family:"Segoe UI",sans-serif;background:rgba(20,20,20,.8);color:#fff;padding:8px 14px;border-radius:30px}
+</style></head>
+<body>
+  <div id="pit"><div id="legal"></div></div>
+  <button id="accept">✓ Accept</button>
+  <div id="hud">📜 Catch the Accept button · Attempt <span id="a">1</span></div>
+  <div id="win"><h1>✓ Accepted!</h1><p id="ws">You caught the button before it vanished into the legal abyss.</p><button class="btn" id="rb">Do it again</button></div>
+  <div class="hint">The <b>Accept</b> button is falling into a bottomless pit of legalese. <b>Click it</b> before it disappears.</div>
+  <script src="_shared.js"></script>
+  <script>
+  // generate a wall of legal text
+  const CLAUSES=["Section","Article","Clause","Provision","Schedule","Annex","Addendum"];
+  let txt="";for(let i=0;i<400;i++){txt+="<b>"+CLAUSES[i%CLAUSES.length]+" "+(i+1)+".</b> "+MX.para(4+Math.random()*3|0)+"<br><br>";}
+  document.getElementById("legal").innerHTML=txt;
+  const legal=document.getElementById("legal");const pitH=legal.scrollHeight;
+  const accept=document.getElementById("accept");
+  let y=120,vy=2.2,speed=1,attempt=1,scrollY=0,caught=false,running=true;
+  function reset(){y=120;vy=2.2;speed+=0.4;caught=false;running=true;scrollY=0;document.getElementById("win").style.display="none";}
+  accept.addEventListener("click",()=>{if(caught)return;caught=true;running=false;document.getElementById("win").style.display="flex";});
+  document.getElementById("rb").onclick=()=>{attempt++;document.getElementById("a").textContent=attempt;reset();};
+  function frame(){
+    requestAnimationFrame(frame);
+    if(!running)return;
+    vy+=0.10*speed;y+=vy;
+    // auto-scroll the pit to follow the button (the "bottomless" effect)
+    scrollY=Math.max(0,y-innerHeight*0.5);
+    legal.style.top=(-scrollY)+"px";
+    accept.style.top=(y-scrollY)+"px";
+    // wobble horizontally so it's harder
+    accept.style.left=(50+Math.sin(y*0.02)*12)+"%";
+    if(y-scrollY>innerHeight+60){ // it escaped
+      running=false;document.getElementById("ws") ;
+      const w=document.getElementById("win");w.style.display="flex";
+      w.querySelector("h1").textContent="✗ It got away";
+      document.getElementById("ws").textContent="The Accept button fell into the void. The terms remain un-agreed.";
+    }
+    if(y>pitH){y=120;} // loop the abyss
+  }
+  frame();
+  </script>
+</body></html>

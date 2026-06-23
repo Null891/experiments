@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Browser Fingerprint Art</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#05060f;color:#cfe;font-family:"Segoe UI",sans-serif}
+  #c{position:fixed;inset:0}
+  #fp{position:fixed;left:16px;top:14px;z-index:3;background:rgba(8,10,22,.6);padding:12px 14px;border-radius:10px;font-size:12px;line-height:1.7;max-width:320px}
+  #fp b{color:#7af0ff}
+  .hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;font-size:12px;color:#89a}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="fp"></div>
+  <div class="hint">This sculpture is generated from YOUR browser's unique fingerprint. No one else gets this exact shape.</div>
+  <script type="module">
+  import * as THREE from "three";
+  // ---- collect fingerprint ----
+  function gpu(){try{const c=document.createElement("canvas");const gl=c.getContext("webgl");const e=gl.getExtension("WEBGL_debug_renderer_info");
+    return e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):"unknown GPU";}catch(e){return "unknown GPU";}}
+  function canvasHash(){const c=document.createElement("canvas");c.width=200;c.height=40;const g=c.getContext("2d");
+    g.textBaseline="top";g.font="16px Arial";g.fillStyle="#f60";g.fillRect(0,0,100,20);g.fillStyle="#069";g.fillText("Mansion🔮fp",2,2);
+    const d=c.toDataURL();let h=0;for(let i=0;i<d.length;i++){h=(Math.imul(31,h)+d.charCodeAt(i))|0;}return h>>>0;}
+  const FP={ua:navigator.userAgent,gpu:gpu(),lang:navigator.language,
+    screen:screen.width+"×"+screen.height+"@"+window.devicePixelRatio+"x",
+    tz:Intl.DateTimeFormat().resolvedOptions().timeZone,cores:navigator.hardwareConcurrency||"?",
+    mem:navigator.deviceMemory||"?",touch:("ontouchstart"in window)?"yes":"no",canvas:canvasHash()};
+  let seed=FP.canvas;for(const k in FP)for(const ch of String(FP[k]))seed=(Math.imul(31,seed)+ch.charCodeAt(0))|0;seed>>>=0;
+  function rng(){seed=(seed+0x6D2B79F5)|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  document.getElementById("fp").innerHTML=`<b>YOUR FINGERPRINT</b><br>
+    GPU: ${FP.gpu}<br>Screen: ${FP.screen}<br>Lang: ${FP.lang} · TZ: ${FP.tz}<br>
+    Cores: ${FP.cores} · RAM: ${FP.mem}GB · Touch: ${FP.touch}<br>Canvas hash: ${FP.canvas}<br>
+    <b>→ sculpture seed: ${seed}</b>`;
+
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x05060f,0.04);
+  const cam=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.1,100);cam.position.z=9;
+  scene.add(new THREE.AmbientLight(0x445,1));
+  const hue=rng();const c1=new THREE.Color().setHSL(hue,0.7,0.55),c2=new THREE.Color().setHSL((hue+0.4)%1,0.7,0.5);
+  const l1=new THREE.PointLight(c1.getHex(),1.6,40);l1.position.set(6,5,8);scene.add(l1);
+  const l2=new THREE.PointLight(c2.getHex(),1.4,40);l2.position.set(-7,-4,6);scene.add(l2);
+
+  // parametric sculpture seeded by fingerprint
+  const p=2+Math.floor(rng()*5),q=1+Math.floor(rng()*6);
+  const tubeR=0.18+rng()*0.4;
+  const geo=new THREE.TorusKnotGeometry(2.4,tubeR,220,32,p,q);
+  const pos=geo.attributes.position;const v=new THREE.Vector3();
+  const amp=0.3+rng()*0.8,freq=2+rng()*6;
+  for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);const d=Math.sin(v.x*freq+seed)*Math.cos(v.y*freq)*amp;
+    v.addScaledVector(v.clone().normalize(),d);pos.setXYZ(i,v.x,v.y,v.z);}geo.computeVertexNormals();
+  const mat=new THREE.MeshStandardMaterial({color:c1,metalness:0.6+rng()*0.4,roughness:0.1+rng()*0.5,
+    emissive:c2,emissiveIntensity:0.15+rng()*0.2,flatShading:rng()<0.4});
+  const mesh=new THREE.Mesh(geo,mat);scene.add(mesh);
+  // orbiting satellites = secondary fp traits
+  const sats=[];for(let i=0;i<6;i++){const s=new THREE.Mesh(new THREE.IcosahedronGeometry(0.18+rng()*0.3,0),
+    new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(rng(),0.8,0.6),emissive:0x113,emissiveIntensity:.4}));
+    s.userData={r:3.4+rng()*2,sp:0.2+rng()*0.6,ph:rng()*7,yr:rng()*2-1};scene.add(s);sats.push(s);}
+
+  let drag=false,px=0,py=0,ry=0,rx=0.3;
+  addEventListener("mousedown",e=>{drag=true;px=e.clientX;py=e.clientY;});addEventListener("mouseup",()=>drag=false);
+  addEventListener("mousemove",e=>{if(drag){ry+=(e.clientX-px)*0.005;rx+=(e.clientY-py)*0.005;px=e.clientX;py=e.clientY;}});
+  function loop(t){requestAnimationFrame(loop);if(!drag)ry+=0.003;mesh.rotation.y=ry;mesh.rotation.x=rx;
+    sats.forEach(s=>{const a=t*0.001*s.userData.sp+s.userData.ph;s.position.set(Math.cos(a)*s.userData.r,Math.sin(a*s.userData.yr)*2,Math.sin(a)*s.userData.r);s.rotation.x=a;s.rotation.y=a*1.3;});
+    renderer.render(scene,cam);}
+  loop(0);
+  addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  </script>
+</body></html>

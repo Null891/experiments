@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Zipper</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#15171d}
+  #c{position:fixed;inset:0;display:block;cursor:grab}
+  #c.drag{cursor:grabbing}
+  #done{position:fixed;left:50%;bottom:6%;transform:translateX(-50%);z-index:10;display:none;text-align:center;
+    font-family:"Segoe UI",sans-serif;color:#dfe4ee}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="done"><a class="btn" id="rb" href="#">It's open. Step through →</a></div>
+  <div class="hint">Grab the <b>zipper pull</b> in the middle and drag it <b>down</b> to open the page</div>
+  <script src="_shared.js"></script>
+  <script>
+  const cv=document.getElementById("c"), ctx=cv.getContext("2d");
+  let W,H,DPR=Math.min(devicePixelRatio,2);
+  let page=document.createElement("canvas"),pctx=page.getContext("2d");
+  function size(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+    page.width=W*DPR;page.height=H*DPR;pctx.setTransform(DPR,0,0,DPR,0,0);
+    MX.paintPage(pctx,W,H,{accent:"#2b7",bg:"#f4f7fb",seed:9,brand:"THE SEALED DISPATCH",title:"What Was Behind the Zipper All Along"});}
+  size(); addEventListener("resize",size);
+
+  const CX=()=>W/2;
+  let zipY=46;                 // current pull position
+  const SPREAD=0.9;            // how wide the V opens per px above the pull
+  let dragging=false;
+
+  function flapEdgeX(y){       // inner edge offset from center at height y (only above zipY)
+    if(y>=zipY) return 0;
+    return Math.min(W*0.5, (zipY-y)*SPREAD);
+  }
+  function drawTeeth(side){
+    // teeth along the inner edge of a flap; side -1 left, +1 right
+    ctx.fillStyle="#c8ccd6";
+    for(let y=10;y<H;y+=12){
+      const off=flapEdgeX(y);
+      const ex=CX()+side*off;
+      // closed teeth interlock at center below the pull
+      ctx.beginPath();
+      ctx.moveTo(ex, y);
+      ctx.lineTo(ex+side*7, y+3);
+      ctx.lineTo(ex, y+6);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  function flapPath(side){
+    ctx.beginPath();
+    const x0 = side<0?0:W;
+    ctx.moveTo(x0,0);
+    // top corner to center-top via inner edge going down
+    for(let y=0;y<=H;y+=6){ const off=flapEdgeX(y); ctx.lineTo(CX()+side*off, y); }
+    ctx.lineTo(x0,H);
+    ctx.closePath();
+  }
+  function drawPull(){
+    const y=zipY;
+    // slider body
+    ctx.save();
+    ctx.translate(CX(),y);
+    const g=ctx.createLinearGradient(-16,-18,16,22);
+    g.addColorStop(0,"#eef1f6");g.addColorStop(.5,"#aab0bd");g.addColorStop(1,"#6b7180");
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(-16,-16);ctx.lineTo(16,-16);ctx.lineTo(12,16);ctx.lineTo(-12,16);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#5b616e"; ctx.fillRect(-13,16,26,8);
+    // pull tab
+    ctx.strokeStyle="#cfd3db";ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,40,12,Math.PI*0.1,Math.PI*0.9,false);ctx.stroke();
+    ctx.fillStyle="#d7dbe3";ctx.beginPath();ctx.roundRect?ctx.roundRect(-9,44,18,30,6):ctx.rect(-9,44,18,30);ctx.fill();
+    ctx.restore();
+  }
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    // page behind
+    ctx.drawImage(page,0,0,page.width,page.height,0,0,W,H);
+    // dark vignette behind flaps for depth
+    // left flap
+    ctx.save();
+    flapPath(-1); ctx.clip();
+    const lg=ctx.createLinearGradient(0,0,W/2,0); lg.addColorStop(0,"#2a2d36");lg.addColorStop(1,"#43474f");
+    ctx.fillStyle=lg; ctx.fillRect(0,0,W,H);
+    // leather stitch line
+    ctx.strokeStyle="rgba(255,255,255,.06)";ctx.lineWidth=2;
+    for(let y=0;y<H;y+=14){const off=flapEdgeX(y);ctx.beginPath();ctx.moveTo(CX()-off-10,y);ctx.lineTo(CX()-off-10,y+6);ctx.stroke();}
+    ctx.restore();
+    // right flap
+    ctx.save();
+    flapPath(1); ctx.clip();
+    const rg=ctx.createLinearGradient(W,0,W/2,0); rg.addColorStop(0,"#2a2d36");rg.addColorStop(1,"#43474f");
+    ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
+    ctx.restore();
+    // teeth + pull
+    drawTeeth(-1); drawTeeth(1);
+    drawPull();
+    if(zipY>H-30){ document.getElementById("done").style.display="block"; document.querySelector(".hint").style.display="none"; }
+    requestAnimationFrame(frame);
+  }
+  frame();
+  function near(e){ const y=e.touches?e.touches[0].clientY:e.clientY; const x=e.touches?e.touches[0].clientX:e.clientX;
+    return Math.abs(x-CX())<60 && Math.abs(y-zipY)<70; }
+  cv.addEventListener("mousedown",e=>{ if(near(e)){dragging=true;cv.classList.add("drag");} });
+  addEventListener("mousemove",e=>{ if(dragging){ zipY=Math.max(46,Math.min(H-8,e.clientY)); } });
+  addEventListener("mouseup",()=>{dragging=false;cv.classList.remove("drag");});
+  cv.addEventListener("touchstart",e=>{ if(near(e)){dragging=true;e.preventDefault();} },{passive:false});
+  addEventListener("touchmove",e=>{ if(dragging){ zipY=Math.max(46,Math.min(H-8,e.touches[0].clientY)); e.preventDefault(); } },{passive:false});
+  addEventListener("touchend",()=>dragging=false);
+  document.getElementById("rb").addEventListener("click",e=>{e.preventDefault();MX.exitToMansion();});
+  </script>
+</body></html>

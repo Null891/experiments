@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The RSA Puzzle Box</title>
+<style>
+  html,body{margin:0;height:100%;background:#0c0f17;color:#cfe;font-family:"Consolas",monospace;overflow:auto}
+  #wrap{max-width:680px;margin:0 auto;padding:24px}
+  h2{font-family:"Segoe UI"}
+  .box{background:#11151f;border:1px solid #21304a;border-radius:10px;padding:14px;margin:12px 0}
+  .box b{color:#7af0ff}
+  input{background:#0a0d14;border:1px solid #2a3550;color:#fff;padding:8px;border-radius:6px;font-family:inherit;width:90px}
+  button{background:#2a6cff;border:0;color:#fff;padding:8px 14px;border-radius:6px;font-weight:700;cursor:pointer;margin-left:6px}
+  .ok{color:#3dff7a}.bad{color:#ff7b72}
+  .mono{color:#ffd479}
+  small{color:#789}
+</style></head>
+<body>
+  <div id="wrap">
+    <h2>🔐 The RSA Puzzle Box</h2>
+    <p><small>RSA's security rests on one thing: factoring a big number is hard. This key is deliberately tiny. Crack it by hand.</small></p>
+    <div class="box">PUBLIC KEY<br>modulus <b>N</b> = <span class="mono" id="N"></span><br>exponent <b>e</b> = <span class="mono" id="e"></span><br>
+      encrypted message <b>c</b> = <span class="mono" id="c"></span></div>
+    <div class="box"><b>Step 1.</b> Factor N into two primes p × q.<br>
+      p = <input id="p"><span> q = </span><input id="q"><button id="checkpq">Check</button>
+      <button id="auto">factor it for me</button><div id="pqr"></div></div>
+    <div class="box" id="step2" style="opacity:.4">
+      <b>Step 2.</b> φ(N) = (p−1)(q−1) = <span class="mono" id="phi">?</span>. Find d, the modular inverse of e mod φ(N).<br>
+      d = <input id="d"><button id="checkd">Check</button><button id="autod">compute d</button><div id="dr"></div></div>
+    <div class="box" id="step3" style="opacity:.4"><b>Step 3.</b> Decrypt: m = c^d mod N → the secret.<br>
+      <button id="decrypt">Decrypt the message</button><div id="msg" style="font-size:20px;margin-top:8px"></div></div>
+  </div>
+  <script>
+  // small primes
+  const PR=[101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193];
+  function pick(){return PR[(Math.random()*PR.length)|0];}
+  let p=pick(),q=pick();while(q===p)q=pick();
+  let N=p*q,e=17,phi=(p-1)*(q-1);
+  while(gcd(e,phi)!==1)e+=2;
+  function gcd(a,b){while(b){[a,b]=[b,a%b];}return a;}
+  function modpow(b,ex,m){b%=m;let r=1;while(ex>0){if(ex&1)r=Number((BigInt(r)*BigInt(b))%BigInt(m));b=Number((BigInt(b)*BigInt(b))%BigInt(m));ex>>=1;}return r;}
+  function modinv(a,m){let[g,x]=egcd(a,m);return ((x%m)+m)%m;}
+  function egcd(a,b){if(!b)return[a,1,0];const[g,x,y]=egcd(b,a%b);return[g,y,x-((a/b)|0)*y];}
+  const SECRET="42";const m=parseInt(SECRET);const c=modpow(m,e,N);
+  const d=modinv(e,phi);
+  document.getElementById("N").textContent=N;document.getElementById("e").textContent=e;document.getElementById("c").textContent=c;
+  document.getElementById("checkpq").onclick=()=>{const pp=+document.getElementById("p").value,qq=+document.getElementById("q").value;
+    const r=document.getElementById("pqr");
+    if(pp*qq===N&&pp!==1&&qq!==1){r.innerHTML="<span class='ok'>✓ Correct! N = "+pp+" × "+qq+"</span>";unlock2(pp,qq);}
+    else r.innerHTML="<span class='bad'>✗ "+pp+" × "+qq+" = "+(pp*qq)+", not "+N+"</span>";};
+  document.getElementById("auto").onclick=()=>{for(let i=2;i<=Math.sqrt(N);i++)if(N%i===0){document.getElementById("p").value=i;document.getElementById("q").value=N/i;document.getElementById("checkpq").click();break;}};
+  function unlock2(pp,qq){document.getElementById("step2").style.opacity="1";document.getElementById("phi").textContent=(pp-1)*(qq-1);}
+  document.getElementById("checkd").onclick=()=>{const dd=+document.getElementById("d").value;const r=document.getElementById("dr");
+    if((dd*e)%phi===1){r.innerHTML="<span class='ok'>✓ Correct! (d·e mod φ = 1)</span>";document.getElementById("step3").style.opacity="1";}
+    else r.innerHTML="<span class='bad'>✗ d·e mod φ = "+((dd*e)%phi)+", needs to be 1</span>";};
+  document.getElementById("autod").onclick=()=>{document.getElementById("d").value=d;document.getElementById("checkd").click();};
+  document.getElementById("decrypt").onclick=()=>{const dd=+document.getElementById("d").value||d;const dec=modpow(c,dd,N);
+    document.getElementById("msg").innerHTML="🔓 decrypted m = <b class='ok'>"+dec+"</b> — the answer to everything. You cracked RSA-"+(N.toString(2).length)+".";};
+  </script>
+</body></html>

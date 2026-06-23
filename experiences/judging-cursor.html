@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Judging AI Cursor</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto}
+  #ai{position:fixed;z-index:30;pointer-events:none;font-size:22px;transition:none;z-index:31}
+  #bubble{position:fixed;z-index:32;pointer-events:none;background:#14161d;color:#fff;font-family:"Segoe UI",sans-serif;
+    font-size:13px;padding:7px 12px;border-radius:10px;max-width:240px;opacity:0;transition:opacity .2s;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  #score{position:fixed;left:16px;top:14px;z-index:33;font-family:"Segoe UI",sans-serif;background:rgba(20,16,30,.85);color:#cfe;padding:8px 12px;border-radius:8px;font-size:13px}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="ai">🤖</div>
+  <div id="bubble"></div>
+  <div id="score">🖱 mouse control rating: <b id="r">—</b></div>
+  <div class="hint">A second, AI-controlled cursor judges how you move. Move smoothly… or don't, and hear about it.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#a06bff",brand:"THE PERIPHERAL CRITIC",
+    title:"Your Mouse Movement Has Been Reviewed and Found Wanting",blocks:9,
+    lede:"Read freely. Just know that a small, supercilious cursor is following yours, taking notes on your every twitch."});
+  const ai=document.getElementById("ai"),bubble=document.getElementById("bubble");
+  let mx=innerWidth/2,my=innerHeight/2,ax=mx,ay=my,pmx=mx,pmy=my,lastV=0,erratic=0,still=0;
+  const JABS=["Was that necessary?","A toddler has steadier hands.","You're not drawing, you're flailing.","Smooth. I'm kidding.","Did you mean to do that?","I've seen Roombas with more intent.","Pick a direction. Commit.","That jerk cost you 3 dignity points.","Are you using a mouse or a maraca?","Beautiful chaos. Terrible aim.","I rated that a 2/10.","My circuits cringed.","Try moving like you mean it."];
+  const NICE=["...okay, that was smooth. Don't get used to praise.","Acceptable. Barely.","See? You CAN move like an adult."];
+  addEventListener("mousemove",e=>{
+    const v=Math.hypot(e.clientX-pmx,e.clientY-pmy);const jerk=Math.abs(v-lastV);
+    pmx=mx;pmy=my;mx=e.clientX;my=e.clientY;lastV=v;still=0;
+    if(jerk>22){erratic=Math.min(100,erratic+14);maybeJab(JABS);}
+    else if(v<6&&jerk<3&&Math.random()<0.02){maybeJab(NICE);erratic=Math.max(0,erratic-6);}
+    else erratic=Math.max(0,erratic-0.5);
+    document.getElementById("r").textContent=(10-Math.round(erratic/12))+"/10";
+  });
+  let bt;function maybeJab(arr){bubble.textContent=arr[(Math.random()*arr.length)|0];
+    bubble.style.left=(ax+22)+"px";bubble.style.top=(ay-10)+"px";bubble.style.opacity="1";
+    clearTimeout(bt);bt=setTimeout(()=>bubble.style.opacity="0",1600);}
+  function loop(){requestAnimationFrame(loop);
+    // AI cursor lags then darts to inspect
+    ax+=(mx-ax)*0.08;ay+=(my-ay)*0.08;
+    ai.style.left=ax+"px";ai.style.top=ay+"px";
+    still++;
+    if(still>180){still=0;maybeJab(["You've stopped. Reading, or frozen by indecision?","Still there? I'm watching.","Idle. Bold strategy."]);}
+  }
+  loop();
+  </script>
+</body></html>

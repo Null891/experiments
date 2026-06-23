@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Generative Conspiracy Map</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#070510;color:#e8d8ff;font-family:"Segoe UI",sans-serif}
+  #c{position:fixed;inset:0}
+  #bar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:3;display:flex;gap:8px;background:rgba(12,8,24,.8);padding:10px;border-radius:12px}
+  #bar input{padding:9px 12px;border-radius:8px;border:1px solid #43306a;background:#160f28;color:#fff;width:140px}
+  #bar button{padding:9px 16px;border:0;border-radius:8px;background:#a06bff;color:#120a22;font-weight:800;cursor:pointer}
+  #tip{position:fixed;z-index:4;pointer-events:none;background:rgba(20,12,40,.92);border:1px solid #a06bff;border-radius:8px;padding:6px 10px;font-size:12px;display:none;max-width:240px}
+  .hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;font-size:12px;color:#a98}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="bar"><input id="w1" value="Bananas"><span style="align-self:center">↔</span><input id="w2" value="The Moon Landing"><button id="go">CONNECT THE DOTS</button></div>
+  <div id="tip"></div>
+  <div class="hint">drag to rotate · the engine "proves" any two things are secretly connected</div>
+  <script type="module">
+  import * as THREE from "three";
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x070510,0.03);
+  const cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,200);cam.position.z=34;
+  scene.add(new THREE.AmbientLight(0x8866ff,1.4));const pl=new THREE.PointLight(0xff66cc,1.2,120);pl.position.set(10,20,30);scene.add(pl);
+
+  const MID=["the Vatican","a yacht in Monaco","Area 51","Big Pharma","the Bilderberg group","a Swiss bank","Atlantis","the Denver airport","a secret 14th floor","the Federal Reserve","lizard people","a forgotten patent","an offshore shell company","the deep state","a viral TikTok","a 1950s ad agency","the Knights Templar","a quantum computer","a missing 18 minutes","the global supply of helium"];
+  const VERB=["secretly funds","was invented by","is a front for","exchanges coded messages with","shares a bank account with","was photographed near","controls the price of","leaked documents about","is buried beneath","communicates telepathically with","owns the trademark to","faked the death of"];
+  let group=new THREE.Group();scene.add(group);
+  const nodes=[],raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();
+  function label(text,color){const cv=document.createElement("canvas");cv.width=256;cv.height=64;const g=cv.getContext("2d");
+    g.fillStyle="rgba(16,10,32,.85)";g.fillRect(0,0,256,64);g.strokeStyle=color;g.lineWidth=3;g.strokeRect(2,2,252,60);
+    g.fillStyle="#fff";g.font="bold 20px Segoe UI";g.textAlign="center";
+    const words=text.split(" ");let y=text.length>16?22:38;words.forEach((w,i)=>{}); // simple wrap
+    let line="",yy=text.length>16?24:38;words.forEach(w=>{if((line+w).length>14){g.fillText(line,128,yy);yy+=22;line=w+" ";}else line+=w+" ";});g.fillText(line,128,yy);
+    const t=new THREE.CanvasTexture(cv);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthWrite:false}));s.scale.set(6,1.5,1);return s;}
+  function build(a,b){
+    group.clear();nodes.length=0;
+    // path of intermediate nodes
+    const chain=[a];const steps=4+(Math.random()*3|0);const used=new Set();
+    for(let i=0;i<steps;i++){let m;do{m=MID[(Math.random()*MID.length)|0];}while(used.has(m));used.add(m);chain.push(m);}
+    chain.push(b);
+    const sph=new THREE.SphereGeometry(0.9,18,18);
+    chain.forEach((name,i)=>{
+      const isEnd=i===0||i===chain.length-1;
+      const ang=i/chain.length*Math.PI*2*1.5,rad=10+i*1.4;
+      const pos=new THREE.Vector3(Math.cos(ang)*rad,(Math.random()-.5)*16,Math.sin(ang)*rad);
+      const col=isEnd?0xff5fa2:0xa06bff;
+      const m=new THREE.Mesh(sph,new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:.5}));
+      m.scale.setScalar(isEnd?1.8:1.1);m.position.copy(pos);m.userData={name,reason:VERB[(Math.random()*VERB.length)|0]};
+      group.add(m);const lab=label(name,isEnd?"#ff5fa2":"#a06bff");lab.position.copy(pos).add(new THREE.Vector3(0,1.8,0));group.add(lab);
+      nodes.push(m);
+    });
+    // edges along chain + random cross links
+    const lines=[];
+    for(let i=0;i<nodes.length-1;i++)lines.push([i,i+1]);
+    for(let i=0;i<5;i++){const a2=(Math.random()*nodes.length)|0,b2=(Math.random()*nodes.length)|0;if(a2!==b2)lines.push([a2,b2]);}
+    lines.forEach(([i,j])=>{const g=new THREE.BufferGeometry().setFromPoints([nodes[i].position,nodes[j].position]);
+      group.add(new THREE.Line(g,new THREE.LineBasicMaterial({color:0x6a4dff,transparent:true,opacity:.4})));});
+  }
+  build("Bananas","The Moon Landing");
+  document.getElementById("go").onclick=()=>build(document.getElementById("w1").value||"X",document.getElementById("w2").value||"Y");
+
+  let yaw=0,pitch=0.2,drag=false,px=0,py=0;
+  addEventListener("mousedown",e=>{drag=true;px=e.clientX;py=e.clientY;});
+  addEventListener("mouseup",()=>drag=false);
+  addEventListener("mousemove",e=>{if(drag){yaw+=(e.clientX-px)*0.005;pitch+=(e.clientY-py)*0.005;px=e.clientX;py=e.clientY;}
+    mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1));
+    raycaster.setFromCamera(mouse,cam);const hit=raycaster.intersectObjects(nodes);const tip=document.getElementById("tip");
+    if(hit.length){const u=hit[0].object.userData;tip.style.display="block";tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+12)+"px";
+      tip.innerHTML=`<b style="color:#ff8ad0">${u.name}</b> ${u.reason} the next node. <span style="color:#a98">(declassified)</span>`;}else tip.style.display="none";});
+  addEventListener("wheel",e=>{cam.position.z=Math.max(14,Math.min(70,cam.position.z+e.deltaY*0.03));},{passive:true});
+  function loop(){requestAnimationFrame(loop);if(!drag)yaw+=0.0015;
+    group.rotation.y=yaw;group.rotation.x=pitch;renderer.render(scene,cam);}loop();
+  addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  </script>
+</body></html>

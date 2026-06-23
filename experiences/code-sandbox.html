@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Code Execution Sandbox</title>
+<style>
+  html,body{margin:0;height:100%;background:#08110a;color:#9f9;font-family:"Consolas",monospace;overflow:hidden}
+  #term{height:100%;display:flex;flex-direction:column;padding:10px 14px;box-sizing:border-box}
+  #out{flex:1;overflow:auto;white-space:pre-wrap;font-size:13px;line-height:1.5}
+  #line{display:flex}#ps1{color:#5f8;white-space:pre}#in{flex:1;background:transparent;border:0;color:#cfc;font-family:inherit;font-size:13px;outline:none}
+  #reset{position:fixed;right:12px;top:10px;color:#f66;font-size:12px;background:rgba(0,0,0,.4);padding:5px 10px;border-radius:6px}
+  .c{color:#6cf}.dir{color:#fc6;font-weight:bold}.err{color:#f77}
+</style></head>
+<body>
+  <div id="term">
+    <div id="out"></div>
+    <div id="line"><span id="ps1"></span><input id="in" autocomplete="off" autofocus></div>
+  </div>
+  <div id="reset">⟲ self-destruct in <span id="cd">10:00</span></div>
+  <script>
+  // simulated filesystem
+  let FS,cwd,USER="root",HOST="sandbox";
+  function freshFS(){return {"/":{type:"d",c:{
+    home:{type:"d",c:{user:{type:"d",c:{"readme.txt":{type:"f",c:"This is a disposable Linux sandbox. You have root. It wipes itself every 10 minutes.\nTry: ls, cat, cd, pwd, whoami, mkdir, rm, echo, neofetch, sudo, help"},"secret.key":{type:"f",c:"-----BEGIN FAKE KEY-----\nMANSION-ROOM-067-VERIFIED\n-----END FAKE KEY-----"}}}}},
+    etc:{type:"d",c:{"passwd":{type:"f",c:"root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000::/home/user:/bin/bash"},"hostname":{type:"f",c:"sandbox"}}},
+    bin:{type:"d",c:{}},tmp:{type:"d",c:{}},var:{type:"d",c:{log:{type:"d",c:{"syslog":{type:"f",c:"[ok] everything is fine until it isn't"}}}}}
+  }}};}
+  function resetFS(){FS=freshFS();cwd=["home","user"];}
+  resetFS();
+  const out=document.getElementById("out"),inp=document.getElementById("in");
+  function ps1(){return `${USER}@${HOST}:/${cwd.join("/")}$ `;}
+  function setPS(){document.getElementById("ps1").textContent=ps1();}
+  function print(s,cls){const d=document.createElement("div");if(cls)d.className=cls;d.textContent=s;out.appendChild(d);out.scrollTop=out.scrollHeight;}
+  function node(path){let n=FS["/"];for(const p of path){if(n.type!=="d"||!n.c[p])return null;n=n.c[p];}return n;}
+  function dirNode(){return node(cwd);}
+  function run(cmd){
+    print(ps1()+cmd);
+    const [c,...args]=cmd.trim().split(/\s+/);const a=args.join(" ");
+    const d=dirNode();
+    switch(c){
+      case"":break;
+      case"help":print("commands: ls cd pwd cat echo mkdir touch rm whoami uname neofetch sudo clear date history");break;
+      case"ls":{const items=Object.entries(d.c||{});if(!items.length){print("(empty)");break;}
+        items.forEach(([k,v])=>print((v.type==="d"?"📁 "+k+"/":"📄 "+k),v.type==="d"?"dir":""));break;}
+      case"pwd":print("/"+cwd.join("/"));break;
+      case"cd":{if(!a||a==="~"){cwd=["home","user"];break;}if(a===".."){if(cwd.length)cwd.pop();break;}
+        const t=d.c&&d.c[a];if(t&&t.type==="d")cwd.push(a);else print("cd: "+a+": No such directory","err");break;}
+      case"cat":{const t=d.c&&d.c[a];if(t&&t.type==="f")print(t.c);else print("cat: "+a+": No such file","err");break;}
+      case"echo":print(a);break;
+      case"mkdir":if(a){d.c[a]={type:"d",c:{}};}else print("mkdir: missing operand","err");break;
+      case"touch":if(a){d.c[a]={type:"f",c:""};}break;
+      case"rm":if(a==="-rf /"||a==="-rf /*"){print("nice try. only the timer gets to do that.","err");}else if(d.c&&d.c[a]){delete d.c[a];}else print("rm: "+a+": not found","err");break;
+      case"whoami":print(USER);break;
+      case"uname":print("Linux sandbox 6.1.0-ephemeral x86_64 GNU/Linux (disposable)");break;
+      case"date":print(new Date().toString());break;
+      case"sudo":print(a?("[sudo] you are already root. the power was inside you all along."):"usage: sudo <command>");break;
+      case"clear":out.innerHTML="";break;
+      case"neofetch":["   .--.       "+USER+"@"+HOST,"  |o_o |      ------------","  |:_/ |      OS: EphemeralLinux (RAM only)","  //   . .    Uptime: "+Math.floor(600-left)+"s of borrowed time","  (|   | )    Shell: /bin/bash (fake)","  /._   _.    Self-destruct: "+fmt(left),"  .___.=.___. CPU: existential dread x8"].forEach(function(l){print(l);}); break;
+      case"history":print("1  ls\n2  cat readme.txt\n3  sudo rm -rf / (denied)\n4  questioning your choices");break;
+      default:print(c+": command not found","err");
+    }
+    setPS();
+  }
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){run(inp.value);inp.value="";}});
+  document.getElementById("term").addEventListener("click",()=>inp.focus());
+  // self-destruct timer
+  let left=600;
+  function fmt(s){return String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0");}
+  setInterval(()=>{left--;document.getElementById("cd").textContent=fmt(left);
+    if(left<=0){print("");print("█████ KERNEL PANIC — SANDBOX SELF-DESTRUCTING █████","err");
+      let burn=0;const bi=setInterval(()=>{print("wiping "+["/home","/etc","/var","/bin","/tmp","memory","reality"][burn]+" ...","err");burn++;
+        if(burn>6){clearInterval(bi);resetFS();left=600;print("");print(">> fresh sandbox provisioned. you have 10 new minutes.","c");setPS();}},150);}
+  },1000);
+  print("EphemeralLinux — you have ROOT. This machine resets every 10 minutes, violently.");
+  print("Type 'help' to begin.\n");setPS();inp.focus();
+  </script>
+</body></html>

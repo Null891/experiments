@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Z-Index Ocean</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #content{position:relative;z-index:1}
+  #fog{position:fixed;inset:0;z-index:5;cursor:none;touch-action:none}
+  #cursor{position:fixed;z-index:7;width:120px;height:120px;border:2px solid rgba(120,200,255,.7);border-radius:50%;
+    transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 30px rgba(80,170,255,.4)}
+  #depth{position:fixed;left:16px;top:14px;z-index:8;font-family:"Segoe UI",sans-serif;font-weight:700;color:#bcd}
+  #depth .big{font-size:24px;color:#7cf}
+</style></head>
+<body>
+  <div class="wrap" id="content"></div>
+  <canvas id="fog"></canvas>
+  <div id="cursor">⛏️</div>
+  <div id="depth">DIGGING THROUGH<br><span class="big" id="z">10000</span> z-index layers</div>
+  <div class="hint">10,000 layers of 1%-opacity divs sit on top of the content. <b>Click &amp; drag</b> to dig down to it.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#2a7",brand:"THE ABYSSAL ARCHIVE",
+    title:"The Real Content Was at the Bottom of the Stack All Along",blocks:9,
+    lede:"Some sites bury the lede. This one buried the entire article under ten thousand transparent layers. Dig."});
+  const fog=document.getElementById("fog"),g=fog.getContext("2d");
+  let W,H;function rs(){W=fog.width=innerWidth;H=fog.height=innerHeight;paint();}rs();addEventListener("resize",rs);
+  // "thickness" map — start fully covered
+  function paint(){g.globalCompositeOperation="source-over";
+    const grd=g.createLinearGradient(0,0,0,H);grd.addColorStop(0,"#0a1422");grd.addColorStop(1,"#04263a");
+    g.fillStyle=grd;g.fillRect(0,0,W,H);
+    // layer number scatter
+    g.fillStyle="rgba(120,180,230,.10)";g.font="11px monospace";
+    for(let i=0;i<400;i++)g.fillText("z:"+(1+Math.random()*10000|0),Math.random()*W,Math.random()*H);
+  }
+  let total=W*H, dug=0, layers=10000;
+  const cur=document.getElementById("cursor");let down=false,mx=-99,my=-99;
+  fog.addEventListener("mousedown",()=>down=true);addEventListener("mouseup",()=>down=false);
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+"px";cur.style.top=my+"px";});
+  fog.addEventListener("touchstart",()=>down=true);addEventListener("touchend",()=>down=false);
+  addEventListener("touchmove",e=>{const t=e.touches[0];mx=t.clientX;my=t.clientY;cur.style.left=mx+"px";cur.style.top=my+"px";down=true;});
+  function dig(){
+    if(down&&mx>0){
+      g.globalCompositeOperation="destination-out";
+      const grd=g.createRadialGradient(mx,my,0,mx,my,60);grd.addColorStop(0,"rgba(0,0,0,.35)");grd.addColorStop(1,"rgba(0,0,0,0)");
+      g.fillStyle=grd;g.beginPath();g.arc(mx,my,60,0,7);g.fill();
+      layers=Math.max(0,layers-26);document.getElementById("z").textContent=layers;
+      if(layers===0){document.getElementById("depth").innerHTML="🪸 You reached the seabed.<br>The content is exposed.";
+        document.querySelector(".hint").style.display="none";}
+    }
+    requestAnimationFrame(dig);
+  }
+  dig();
+  </script>
+</body></html>

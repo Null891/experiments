@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Magnifying Glass UI</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;cursor:none;background:#fff}
+  #stage{position:relative;height:100%;overflow:hidden;background:#fff}
+  /* the real article, scaled down uniformly so it's an unreadable smear */
+  #tiny{position:absolute;left:0;top:0;transform-origin:0 0;width:900px}
+  #loupe{position:fixed;width:300px;height:300px;border-radius:50%;z-index:10;pointer-events:none;overflow:hidden;
+    border:8px solid #2a2d36;box-shadow:0 0 0 2px #000,0 16px 40px rgba(0,0,0,.4);background:#fff;transform:translate(-50%,-50%)}
+  #loupe .inner{position:absolute;left:0;top:0;transform-origin:0 0;width:900px}
+  #scrollnote{position:fixed;right:16px;top:14px;z-index:6;font-family:"Segoe UI",sans-serif;font-size:12px;color:#999}
+</style></head>
+<body>
+  <div id="stage"><div id="tiny"><div class="wrap" id="content"></div></div></div>
+  <div id="loupe"><div class="inner" id="loupeContent"></div></div>
+  <div id="scrollnote">scroll = pan ↕</div>
+  <div class="hint">The whole article is shrunk to a <b>smear</b>. Your cursor is a <b>loupe</b> — move it to read; scroll to pan.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#222",brand:"THE FINE PRINT QUARTERLY",
+    title:"Everything Important Was Written Too Small To Read",blocks:22,
+    lede:"Without the loupe this page is grey static. Glide the magnifier across the murk to recover the words underneath."});
+  const S=0.085;                                   // shrink factor (~12x magnification)
+  const tiny=document.getElementById("tiny");
+  tiny.style.transform=`scale(${S})`;
+  // clone full-size content into the loupe
+  document.getElementById("loupeContent").innerHTML='<div class="wrap">'+document.getElementById("content").innerHTML+'</div>';
+  const loupe=document.getElementById("loupe"),inner=document.getElementById("loupeContent");
+  const R=150;
+  let mx=innerWidth/2,my=innerHeight/2,panY=0;
+  const totalH=document.getElementById("content").scrollHeight*S;
+  function place(){
+    loupe.style.left=mx+"px";loupe.style.top=my+"px";
+    // unscaled coordinate under the cursor:
+    const ux=(mx)/S, uy=(my+panY)/S;
+    inner.style.left=(R-ux)+"px";
+    inner.style.top =(R-uy)+"px";
+  }
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;place();});
+  addEventListener("wheel",e=>{panY=Math.max(0,Math.min(totalH-innerHeight*0.4,panY+e.deltaY));tiny.style.top=(-panY)+"px";place();},{passive:true});
+  place();
+  </script>
+</body></html>

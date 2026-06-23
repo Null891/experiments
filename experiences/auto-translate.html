@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Auto-Translating Chaos</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#0f130d}
+  #scroller{height:100%;overflow:auto}
+  #ctrl{position:fixed;right:14px;top:12px;z-index:9;background:rgba(10,14,8,.9);color:#cfe;padding:12px;border-radius:10px;font-family:"Segoe UI",sans-serif;font-size:13px;width:210px}
+  #ctrl input{width:100%}
+  #passes{font-size:22px;font-weight:800;color:#9ad29a}
+  .wrap{color:#dfe;background:#11160d}
+  nav.site,.byline,footer.site{color:#9ad29a}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="ctrl">🌐 GOOGLE TELEPHONE<br><span id="passes">50</span> translation passes
+    <input id="slider" type="range" min="0" max="50" value="50">
+    <div style="opacity:.7;margin-top:6px">Routed EN→XX→…→EN, fifty times. Meaning evaporates. Poetry remains.</div>
+  </div>
+  <div class="hint">This page was machine-translated <b>50 times</b> in a row. Slide to watch sense dissolve.</div>
+  <script src="_shared.js"></script>
+  <script>
+  // original (pass 0) text
+  const PARAS=[
+    "Welcome to our website. We make tools that help people work together more easily and finish their projects on time.",
+    "Our team believes that good design is invisible. When something works well, you do not notice it at all.",
+    "Please read the following carefully before you continue. Your attention is the most valuable thing you own.",
+    "We started this company in a small room with a single computer and a very large idea about the future.",
+    "Thank you for visiting. If you have any questions, do not hesitate to reach out to our friendly support staff.",
+    "The garden behind the office is where most of our best decisions are quietly made, usually over coffee."
+  ];
+  // a degradation engine that simulates translation drift
+  const SUB={the:"the",is:"are being",are:"is",we:"the we",our:"of us the",you:"thou-person",make:"manufacture",help:"give assistance toward",people:"the peoples",work:"labor-activity",together:"in one-togetherness",finish:"make the ending of",projects:"the big-plans",time:"the clock-moment",good:"of high-goodness",design:"the drawing-plan",invisible:"not-able-to-see",works:"performs the function",notice:"put eyes upon",read:"do the reading",following:"that which comes after",attention:"the eye-focus",valuable:"of much worth-money",own:"have-possess",started:"made the beginning",company:"group-business",small:"of little bigness",room:"the inside-box",computer:"the thinking-machine",idea:"brain-thought",future:"the not-yet-time",thank:"give the thanks",visiting:"doing the coming-to",questions:"the asking-things",support:"the holding-up",staff:"the worker-persons",garden:"plant-place",office:"work-building",decisions:"the choosing-acts",coffee:"the bean-water",believes:"holds in the heart",continue:"keep on going forward",easily:"with much easiness",friendly:"of warm-niceness"};
+  function degrade(text,passes){
+    let words=text.split(/\s+/);
+    let intensity=passes/50;
+    // word substitutions accumulate with passes
+    words=words.map(w=>{const k=w.toLowerCase().replace(/[^a-z]/g,"");
+      if(SUB[k]&&Math.random()<intensity*1.1)return SUB[k];return w;});
+    let s=words.join(" ");
+    // article dropping, particle insertion, reordering grow with passes
+    const ops=Math.round(passes*0.9);
+    for(let i=0;i<ops;i++){
+      const a=s.split(" ");
+      const r=Math.random();
+      if(r<0.3&&a.length>5){const j=2+(Math.random()*(a.length-4))|0;[a[j],a[j+1]]=[a[j+1],a[j]];}
+      else if(r<0.5){const j=(Math.random()*a.length)|0;a.splice(j,0,["of-the","is-being","very","the","most","in-here","yes"][Math.random()*7|0]);}
+      else if(r<0.65&&a.length>6){a.splice((Math.random()*a.length)|0,1);}
+      s=a.join(" ");
+    }
+    // capitalization drift
+    if(passes>20)s=s.replace(/\.\s+/g,". ").replace(/(^|\. )([a-z])/g,(m,p,c)=>p+c.toUpperCase());
+    return s.charAt(0).toUpperCase()+s.slice(1)+(/[.?!]$/.test(s)?"":".");
+  }
+  function render(passes){
+    const titles=["Welcome to Our Website","The We-Place of Warm Greeting-Toward-Thou","Greeting Box For The Eye-Person Who Arrives"];
+    MX.fakeArticle(document.getElementById("content"),{accent:"#9ad29a",brand:"WORLD CONTENT GLOBAL",
+      title:passes>25?titles[2]:passes>8?titles[1]:titles[0],blocks:0,
+      lede:degrade(PARAS[0],passes)});
+    const c=document.getElementById("content");
+    PARAS.slice(1).forEach(p=>{const el=document.createElement("p");el.textContent=degrade(p,passes);c.appendChild(el);});
+  }
+  render(50);
+  document.getElementById("slider").addEventListener("input",e=>{const v=+e.target.value;document.getElementById("passes").textContent=v;render(v);});
+  </script>
+</body></html>

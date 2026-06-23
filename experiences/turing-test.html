@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Turing Test Chatbot</title>
+<style>
+  html,body{margin:0;height:100%;background:#0c0f17;font-family:"Segoe UI",sans-serif;color:#e8ecf5;overflow:hidden}
+  #chat{max-width:680px;margin:0 auto;height:100%;display:flex;flex-direction:column}
+  #log{flex:1;overflow-y:auto;padding:24px 16px 8px}
+  .msg{max-width:78%;margin:8px 0;padding:11px 15px;border-radius:16px;line-height:1.45;animation:pop .25s}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}}
+  .bot{background:#1b2333;border-bottom-left-radius:4px}
+  .me{background:#2a6cff;color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+  .sys{text-align:center;color:#789;font-size:12px;margin:10px 0}
+  #bar{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #1b2333}
+  #in{flex:1;padding:13px;border-radius:24px;border:1px solid #2a3550;background:#11151f;color:#fff;font-size:15px}
+  #send{padding:0 22px;border:0;border-radius:24px;background:#2a6cff;color:#fff;font-weight:700;cursor:pointer}
+  #meter{height:6px;background:#1b2333;border-radius:4px;margin:0 16px 8px;overflow:hidden}
+  #mf{height:100%;width:8%;background:linear-gradient(90deg,#ff5d5d,#1dd1a1);transition:width .4s}
+</style></head>
+<body>
+  <div id="chat">
+    <div class="sys">◢ GATEKEEPER v9 · prove you're human to receive the URL</div>
+    <div id="meter"><div id="mf"></div></div>
+    <div id="log"></div>
+    <div id="bar"><input id="in" placeholder="Convince me you're human…" autocomplete="off"><button id="send">Send</button></div>
+  </div>
+  <script>
+  const log=document.getElementById("log");
+  let human=8; // 0..100 "humanity score"
+  function add(t,cls){const d=document.createElement("div");d.className="msg "+cls;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+  function bot(t){setTimeout(()=>add(t,"bot"),420+Math.random()*500);}
+  function setMeter(){document.getElementById("mf").style.width=Math.max(5,Math.min(100,human))+"%";}
+  const OPENERS=["State your purpose, carbon-based or otherwise.","Before I hand over the URL: are you human? Prove it.","I've been fooled by bots before. Convince me you bleed."];
+  add(OPENERS[(Math.random()*OPENERS.length)|0],"bot");
+  const PROBES=[
+    "Describe the taste of water to someone who has never had it.",
+    "What's something embarrassing you did that a bot would never admit?",
+    "Spell 'definitely' wrong, the way a tired human would.",
+    "What does Tuesday smell like?",
+    "Quick: a number between 1 and 10 — and WHY that one?",
+    "Tell me a joke that isn't funny on purpose.",
+    "If you had to delete one color forever, which and what dies with it?"
+  ];
+  function judge(t){
+    const s=t.trim();let d=0;
+    if(s.length>40)d+=8; if(s.length<4)d-=10;
+    if(/[A-Z]/.test(s)&&/[a-z]/.test(s))d+=3;
+    if(/\b(um|uh|honestly|idk|lol|haha|tbh|like,|feel|smell|taste|hate|love|tired|coffee)\b/i.test(s))d+=14;
+    if(/[!?]/.test(s))d+=4;
+    if(/as an ai|language model|i cannot|i'm a bot/i.test(s))d-=40;
+    if(/[a-z]{2,}\b.*\b[a-z]{2,}/.test(s)&&Math.random()<.5)d+=5;
+    if(/(.)\1{4,}/.test(s))d-=8; // aaaaaa
+    d+=Math.floor(Math.random()*8)-2;
+    return d;
+  }
+  const REACT_UP=["Hmm. A bot wouldn't say that.","Okay, that gave me pause.","Suspiciously human. Continue.","Warmer. You might actually have a body."];
+  const REACT_DOWN=["That's exactly what a bot would type.","Too clean. Try again, meatbag.","I felt nothing. Humans make me feel things.","Calculated. I don't like it."];
+  let asked=0;
+  function reply(t){
+    add(t,"me");
+    const d=judge(t);human+=d;setMeter();
+    if(human>=100){bot("…fine. You're human. Or a very good liar. Here's your URL: mansion://room-024/verified. Welcome.");
+      setTimeout(()=>add("ACCESS GRANTED ✓","sys"),1400);document.getElementById("in").disabled=true;return;}
+    if(human<=-15){bot("Confirmed bot. Connection terminated. (refresh to try again)");document.getElementById("in").disabled=true;return;}
+    bot((d>=0?REACT_UP:REACT_DOWN)[(Math.random()*4)|0]);
+    if(asked<PROBES.length){const p=PROBES[asked++];bot(p);}
+    else bot("Keep going. I'm "+Math.round(human)+"% convinced.");
+  }
+  function send(){const v=document.getElementById("in").value;if(!v.trim())return;document.getElementById("in").value="";reply(v);}
+  document.getElementById("send").onclick=send;
+  document.getElementById("in").addEventListener("keydown",e=>{if(e.key==="Enter")send();});
+  bot(PROBES[asked++]);setMeter();
+  </script>
+</body></html>

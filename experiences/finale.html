@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Architect's Chamber</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#03020a;color:#f5e9c8;font-family:"Segoe UI",system-ui,sans-serif}
+  #c{position:fixed;inset:0;display:block}
+  #tip{position:fixed;z-index:4;pointer-events:none;background:rgba(20,16,8,.9);border:1px solid #ffd86b;border-radius:8px;
+    padding:5px 10px;font-size:12px;color:#ffe9b0;display:none}
+  #mono{position:fixed;left:50%;bottom:9%;transform:translateX(-50%);z-index:3;max-width:760px;width:90%;text-align:center;
+    font-size:clamp(15px,2.1vw,21px);line-height:1.6;text-shadow:0 2px 14px #000;min-height:90px}
+  #seen{position:fixed;left:50%;top:7%;transform:translateX(-50%);z-index:3;text-align:center;letter-spacing:2px;
+    font-size:13px;color:#caa86b;text-transform:uppercase}
+  #seen b{color:#ffd86b;font-size:26px;display:block;letter-spacing:1px}
+  #btns{position:fixed;left:50%;bottom:3%;transform:translateX(-50%);z-index:5;display:flex;gap:12px}
+  button{background:linear-gradient(#ffe39a,#e8a83b);border:0;color:#2a1a00;padding:12px 24px;border-radius:30px;
+    font-weight:800;cursor:pointer;font-size:15px;box-shadow:0 0 30px rgba(255,200,90,.35);transition:transform .15s}
+  button:hover{transform:scale(1.05)}
+  button.ghost{background:rgba(255,255,255,.08);color:#f5e9c8;box-shadow:none;border:1px solid rgba(255,216,107,.4)}
+  #title{position:fixed;left:50%;top:16%;transform:translate(-50%,-50%);z-index:3;text-align:center;opacity:0;transition:opacity 1s;
+    font-size:clamp(28px,6vw,64px);font-weight:800;letter-spacing:4px;
+    background:linear-gradient(90deg,#fff3cf,#ffd86b,#e89b2f);-webkit-background-clip:text;background-clip:text;color:transparent}
+</style>
+<script type="importmap">{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="title">THE ARCHITECT</div>
+  <div id="seen"></div>
+  <div id="tip"></div>
+  <div id="mono"></div>
+  <div id="btns">
+    <button id="collapse">✦ Collapse the Mansion</button>
+    <button id="back" class="ghost">↩ Return to the halls</button>
+  </div>
+  <script src="../js/registry.js"></script>
+  <script type="module">
+  import * as THREE from "three";
+  const ROOMS=(globalThis.ROOMS||[]).filter(r=>!r.finale);
+  const seen=Math.max(0,Math.min(ROOMS.length,parseInt(new URLSearchParams(location.search).get("seen")||"0",10)||0));
+  document.getElementById("seen").innerHTML=`you opened<b>${seen} / ${ROOMS.length}</b>doors`;
+
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x03020a,0.012);
+  const cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,400);cam.position.set(0,4,42);
+  scene.add(new THREE.AmbientLight(0x442a10,1.0));
+  const key=new THREE.PointLight(0xffd86b,2.4,200);key.position.set(0,10,20);scene.add(key);
+
+  // starfield
+  const sg=new THREE.BufferGeometry(),sp=[];for(let i=0;i<2400;i++){const v=new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)).normalize().multiplyScalar(80+Math.random()*120);sp.push(v.x,v.y,v.z);}
+  sg.setAttribute("position",new THREE.Float32BufferAttribute(sp,3));
+  const stars=new THREE.Points(sg,new THREE.PointsMaterial({color:0x8a7fbf,size:0.5,transparent:true,opacity:.8}));scene.add(stars);
+
+  // central monolith: a glowing crystal
+  const core=new THREE.Group();scene.add(core);
+  const crystal=new THREE.Mesh(new THREE.IcosahedronGeometry(4,0),
+    new THREE.MeshStandardMaterial({color:0xffd86b,emissive:0xffae33,emissiveIntensity:1.4,metalness:.6,roughness:.2,flatShading:true}));
+  core.add(crystal);
+  const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(5.4,1),new THREE.MeshBasicMaterial({color:0xffe9b0,wireframe:true,transparent:true,opacity:.25}));
+  core.add(wire);
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(6.6,32,32),new THREE.MeshBasicMaterial({color:0xffae33,transparent:true,opacity:.06,side:THREE.BackSide}));
+  core.add(halo);
+
+  // one orb per room, in a galaxy spiral
+  const orbs=[];const orbGeo=new THREE.SphereGeometry(0.42,16,16);
+  ROOMS.forEach((room,i)=>{
+    const t=i/ROOMS.length;
+    const arm=(i%3)*(Math.PI*2/3);
+    const ang=t*Math.PI*7+arm;
+    const rad=9+t*22;
+    const col=new THREE.Color(room.color);
+    const m=new THREE.Mesh(orbGeo,new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity: i<seen?1.6:0.25}));
+    const y=(Math.random()-.5)*8*(0.4+t);
+    m.position.set(Math.cos(ang)*rad,y,Math.sin(ang)*rad);
+    m.userData={room,ang,rad,y,opened:i<seen,home:m.position.clone(),vel:new THREE.Vector3()};
+    if(i<seen){const l=new THREE.PointLight(col.getHex(),0.5,8);m.add(l);}
+    scene.add(m);orbs.push(m);
+  });
+
+  // bloom (optional — falls back gracefully if addons can't load)
+  let composer=null;
+  try{
+    const {EffectComposer}=await import("three/addons/postprocessing/EffectComposer.js");
+    const {RenderPass}=await import("three/addons/postprocessing/RenderPass.js");
+    const {UnrealBloomPass}=await import("three/addons/postprocessing/UnrealBloomPass.js");
+    composer=new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene,cam));
+    const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.9,0.5,0.2);
+    composer.addPass(bloom);
+  }catch(e){ composer=null; }
+
+  // interaction
+  const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(-2,-2);let mx=0,my=0;
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight*2-1));});
+  const tip=document.getElementById("tip");
+
+  // typed monologue
+  const LINES=[
+    "So. You found the last door.",
+    "One hundred ideas. Seventy-four of them I could actually build with my own two hands and a browser.",
+    "Each room was a small argument: that a webpage does not have to behave.",
+    "That it can tear, shatter, burn, breathe, judge you, flee from you, or fall through the fourth dimension.",
+    seen>=ROOMS.length?"And you opened every single one. You wandered the whole house. Thank you."
+      :seen>0?`You opened ${seen}. The rest are still glowing out there, waiting. Go back, if you like. They keep.`
+      :"You came straight here without opening any. Bold. The orbs out there are every room you skipped.",
+    "When you are ready, you can collapse it all into a single point of light — or return to the halls.",
+  ];
+  const mono=document.getElementById("mono");let li=0,ci=0,typing=true;
+  function type(){
+    if(li>=LINES.length){typing=false;return;}
+    mono.textContent=LINES[li].slice(0,ci);
+    if(ci<LINES[li].length){ci++;setTimeout(type,22);}
+    else{setTimeout(()=>{li++;ci=0;if(li<LINES.length){mono.style.opacity=.0;setTimeout(()=>{mono.style.opacity=1;type();},420);}else typing=false;},1700);}
+  }
+  mono.style.transition="opacity .4s";
+  setTimeout(()=>{document.getElementById("title").style.opacity="1";setTimeout(()=>document.getElementById("title").style.opacity="0",2600);},300);
+  setTimeout(type,1200);
+
+  // collapse sequence
+  let collapsing=false,collapseT=0;
+  document.getElementById("collapse").onclick=()=>{ if(collapsing)return; collapsing=true;
+    document.getElementById("btns").style.display="none";document.getElementById("mono").textContent="";document.getElementById("seen").style.opacity=".2"; };
+  document.getElementById("back").onclick=()=>{ try{parent.postMessage({type:"exit-room"},"*");}catch(e){} };
+
+  let camAng=0;const clock=new THREE.Clock();
+  function loop(){
+    requestAnimationFrame(loop);
+    const dt=Math.min(clock.getDelta(),0.05),t=clock.elapsedTime;
+    core.rotation.y+=dt*0.25;core.rotation.x=Math.sin(t*0.2)*0.15;
+    crystal.material.emissiveIntensity=1.2+Math.sin(t*2)*0.4;
+    stars.rotation.y+=dt*0.01;
+
+    if(!collapsing){
+      // orbit the orbs + gentle camera drift
+      orbs.forEach(o=>{o.userData.ang+=dt*(0.05+0.4/o.userData.rad);
+        o.position.set(Math.cos(o.userData.ang)*o.userData.rad,o.userData.y+Math.sin(t*0.5+o.userData.rad)*0.6,Math.sin(o.userData.ang)*o.userData.rad);});
+      camAng+=dt*0.04;
+      const px=(mx/innerWidth-0.5)*6, py=(my/innerHeight-0.5)*4;
+      cam.position.set(Math.sin(camAng)*42+px,4-py,Math.cos(camAng)*42);
+      cam.lookAt(0,0,0);
+      // hover
+      ray.setFromCamera(mouse,cam);const hit=ray.intersectObjects(orbs);
+      if(hit.length){const u=hit[0].object.userData;tip.style.display="block";tip.style.left=(mx+14)+"px";tip.style.top=(my+14)+"px";
+        tip.innerHTML=`<b style="color:${u.room.color}">${u.room.name}</b> ${u.opened?"· opened ✓":"· not yet opened"}`;}
+      else tip.style.display="none";
+    } else {
+      collapseT+=dt;tip.style.display="none";
+      // suck every orb into the core, then implode
+      orbs.forEach(o=>{const dir=o.position.clone().multiplyScalar(-1);o.userData.vel.addScaledVector(dir.normalize(),dt*40);
+        o.position.addScaledVector(o.userData.vel,dt);o.material.emissiveIntensity=2.5;
+        if(o.position.length()<3){o.visible=false;}});
+      crystal.scale.setScalar(1+Math.sin(collapseT*6)*0.1+collapseT*0.4);
+      halo.material.opacity=Math.min(.5,collapseT*0.2);
+      cam.position.lerp(new THREE.Vector3(0,1,18),dt*1.2);cam.lookAt(0,0,0);
+      key.intensity=2.4+collapseT*6;
+      if(collapseT>2.4 && !window.__done){window.__done=true;
+        // flash + end card
+        crystal.scale.setScalar(0.01);
+        const end=document.createElement("div");
+        end.style.cssText="position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle,#1a1306,#03020a 70%);animation:fin 1.2s";
+        end.innerHTML=`<div style="font-size:clamp(22px,4vw,40px);font-weight:800;letter-spacing:2px;color:#ffd86b">thank you for wandering.</div>
+          <div style="margin-top:10px;color:#caa86b">— the architect</div>
+          <div style="margin-top:30px;display:flex;gap:12px">
+            <button onclick="parent.postMessage({type:'exit-room'},'*')" style="background:linear-gradient(#ffe39a,#e8a83b);border:0;color:#2a1a00;padding:12px 24px;border-radius:30px;font-weight:800;cursor:pointer">Return to the mansion</button>
+            <button onclick="location.reload()" style="background:rgba(255,255,255,.08);color:#f5e9c8;border:1px solid rgba(255,216,107,.4);padding:12px 24px;border-radius:30px;cursor:pointer">Watch it again</button>
+          </div>`;
+        const st=document.createElement("style");st.textContent="@keyframes fin{0%{opacity:0;backdrop-filter:blur(20px)}100%{opacity:1}}";document.head.appendChild(st);
+        document.body.appendChild(end);
+      }
+    }
+    if(composer)composer.render();else renderer.render(scene,cam);
+  }
+  loop();
+  addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);if(composer)composer.setSize(innerWidth,innerHeight);});
+  </script>
+</body></html>

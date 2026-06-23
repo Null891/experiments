@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Schizophrenic Nav</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto}
+  nav.crazy{position:sticky;top:0;z-index:10;display:flex;gap:6px;flex-wrap:wrap;background:#14161d;padding:12px;
+    border-bottom:2px solid #ff9d4d}
+  nav.crazy a{position:relative;color:#fff;background:#222a3a;padding:8px 14px;border-radius:8px;text-decoration:none;
+    font-family:"Segoe UI",sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;white-space:nowrap}
+  nav.crazy a:hover{background:#ff9d4d;color:#201400}
+  .bubble{position:absolute;left:50%;top:115%;transform:translateX(-50%);background:#fff;color:#111;font-weight:600;
+    font-size:12px;padding:6px 10px;border-radius:8px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.3);
+    opacity:0;pointer-events:none;transition:opacity .2s;font-family:"Segoe UI",sans-serif;z-index:5}
+  nav.crazy a:hover .bubble{opacity:1}
+  .bubble::before{content:"";position:absolute;left:50%;top:-6px;transform:translateX(-50%);border:6px solid transparent;border-bottom-color:#fff}
+</style></head>
+<body>
+  <div id="scroller">
+    <nav class="crazy" id="nav"></nav>
+    <div class="wrap" id="content"></div>
+  </div>
+  <div class="hint">The navbar can't agree with itself. Links keep <b>renaming</b> and trying to talk you out of clicking them.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#ff9d4d",brand:"THE INDECISIVE TIMES",
+    title:"The Navigation Would Prefer If You Just Left",blocks:8,
+    lede:"Below is an article. Above is a navigation bar having a nervous breakdown. The links do not want to be clicked. Please respect their boundaries."});
+  const NAMES=["Home","Definitely Not Home","About","About What?","Products","Don't","Blog","The Blog (regrettable)","Contact","Please No","Login","Why","Pricing","Run","Help","There Is No Help","Careers","Leave","Shop","Empty"];
+  const NAGS=["don't click this one","this leads nowhere good","I wouldn't","are you sure? I'm not","this used to be 'Home'","clicking me is a mistake","I changed my mind, go back","this link hates you","404 lives here","trust me, skip it","I'm only here to disappoint you","ugh, fine, but don't"];
+  const nav=document.getElementById("nav");
+  const links=[];
+  for(let i=0;i<7;i++){const a=document.createElement("a");a.href="#";
+    a.innerHTML='<span class="t"></span><span class="bubble"></span>';nav.appendChild(a);links.push(a);
+    a.addEventListener("click",e=>{e.preventDefault();a.querySelector(".t").textContent="see? nothing.";a.style.background="#600";});}
+  function shuffle(){
+    links.forEach(a=>{
+      if(Math.random()<0.55)a.querySelector(".t").textContent=NAMES[(Math.random()*NAMES.length)|0];
+      if(Math.random()<0.5)a.querySelector(".bubble").textContent=NAGS[(Math.random()*NAGS.length)|0];
+      if(Math.random()<0.2)a.style.order=(Math.random()*10)|0;
+      if(Math.random()<0.15)a.style.transform=`rotate(${(Math.random()-.5)*8}deg)`;
+    });
+  }
+  shuffle();setInterval(shuffle,1400);
+  // occasionally the navbar argues out loud
+  const arg=document.createElement("div");arg.style.cssText="margin:10px 12px;font-family:'Segoe UI';color:#ff9d4d;font-style:italic;font-size:13px";
+  nav.after(arg);
+  const ARGS=['"Home" is a lie and you know it.','— stop renaming yourself! / — YOU stop!','We had ONE job.','Nobody clicks "Careers" anyway.','I vote we hide the Contact link. Again.'];
+  setInterval(()=>{arg.textContent=ARGS[(Math.random()*ARGS.length)|0];},2000);
+  </script>
+</body></html>

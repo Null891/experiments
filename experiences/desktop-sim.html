@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Desktop Simulator</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",Tahoma,sans-serif;user-select:none;
+    background:linear-gradient(135deg,#1e5799,#2989d8,#7db9e8)}
+  #desk{position:absolute;inset:0}
+  .icon{position:absolute;width:84px;text-align:center;color:#fff;cursor:pointer;padding:6px;border-radius:6px}
+  .icon:hover{background:rgba(255,255,255,.18)}
+  .icon .g{font-size:42px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+  .icon .l{font-size:12px;margin-top:4px;text-shadow:0 1px 3px #000;word-break:break-word}
+  .win{position:absolute;width:440px;height:300px;background:#f4f4f4;border:1px solid #888;border-radius:8px 8px 4px 4px;
+    box-shadow:0 16px 50px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden}
+  .title{background:linear-gradient(#3a7bd5,#2456a8);color:#fff;padding:7px 10px;font-size:13px;font-weight:700;cursor:move;display:flex;justify-content:space-between}
+  .title .x{cursor:pointer;background:#e44;width:18px;height:18px;border-radius:50%;text-align:center;line-height:18px}
+  .body{flex:1;padding:12px;overflow:auto;position:relative;background:#fff}
+  .body .icon{position:relative;display:inline-block;color:#222;width:90px;vertical-align:top}
+  .body .icon .l{color:#222;text-shadow:none}
+  .doc{font-family:Georgia,serif;color:#222;line-height:1.5;font-size:14px}
+  #taskbar{position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(20,30,50,.85);backdrop-filter:blur(6px);
+    display:flex;align-items:center;padding:0 10px;color:#fff;font-size:13px;gap:10px}
+  #start{background:#2c7;padding:6px 14px;border-radius:5px;font-weight:800;cursor:pointer}
+  .hint{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:7px 14px;border-radius:30px;font-size:13px;z-index:50}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <div id="desk"></div>
+  <div id="taskbar"><span id="start">⊞ Start</span><span id="clock"></span><span style="margin-left:auto">📶 🔊 🔋 100%</span></div>
+  <div class="hint">Find the <b>About</b> page. It's not on the desktop. Try the folder named <b>taxes_2014</b>…</div>
+  <script src="_shared.js"></script>
+  <script>
+  const desk=document.getElementById("desk");
+  setInterval(()=>document.getElementById("clock").textContent=new Date().toLocaleTimeString(),1000);
+  let z=10;
+  function mkIcon(parent,g,label,x,y,onOpen){
+    const el=document.createElement("div");el.className="icon";el.style.left=x+"px";el.style.top=y+"px";
+    el.innerHTML=`<div class="g">${g}</div><div class="l">${label}</div>`;
+    el.addEventListener("dblclick",onOpen);el.addEventListener("click",e=>e.stopPropagation());
+    parent.appendChild(el);return el;
+  }
+  function openWindow(title,buildBody,x,y){
+    const w=document.createElement("div");w.className="win";w.style.left=(x||120+Math.random()*200)+"px";w.style.top=(y||90+Math.random()*120)+"px";w.style.zIndex=++z;
+    w.innerHTML=`<div class="title"><span>📁 ${title}</span><span class="x">×</span></div><div class="body"></div>`;
+    desk.appendChild(w);buildBody(w.querySelector(".body"));
+    w.addEventListener("mousedown",()=>w.style.zIndex=++z);
+    w.querySelector(".x").onclick=()=>w.remove();
+    // drag
+    const t=w.querySelector(".title");let dx,dy,drag=false;
+    t.addEventListener("mousedown",e=>{drag=true;dx=e.clientX-w.offsetLeft;dy=e.clientY-w.offsetTop;});
+    addEventListener("mousemove",e=>{if(drag){w.style.left=(e.clientX-dx)+"px";w.style.top=(e.clientY-dy)+"px";}});
+    addEventListener("mouseup",()=>drag=false);
+    return w;
+  }
+  // desktop clutter
+  mkIcon(desk,"🗑️","Recycle Bin (full)",24,20,()=>openWindow("Recycle Bin",b=>b.innerHTML="<div class='doc'>17,402 items. None of them are the About page.</div>"));
+  mkIcon(desk,"📄","resume_FINAL_v7_real.docx",24,120,()=>openWindow("resume_FINAL_v7_real",b=>b.innerHTML="<div class='doc'>This is not the About page. This is a resume from 2011. Keep looking.</div>"));
+  mkIcon(desk,"📁","New Folder",24,220,()=>openWindow("New Folder",b=>{ mkIcon(b,"📁","New Folder (2)",10,10,()=>openWindow("New Folder (2)",bb=>bb.innerHTML="<div class='doc'>Empty. Like the promise of organization.</div>"));}));
+  mkIcon(desk,"📁","taxes_2014",24,320,()=>openWindow("taxes_2014",b=>{
+    mkIcon(b,"📄","1099.pdf",10,10,()=>openWindow("1099.pdf",bb=>bb.innerHTML="<div class='doc'>Boring. Not it.</div>"));
+    mkIcon(b,"📁","misc",110,10,()=>openWindow("misc",bb=>{
+      mkIcon(bb,"📁","old_stuff",10,10,()=>openWindow("old_stuff",bbb=>{
+        mkIcon(bbb,"📄","about_DONT_DELETE.html",10,10,()=>openWindow("About — finally",b4=>{
+          const c=document.createElement("div");c.className="doc";b4.appendChild(c);
+          MX.fakeArticle(c,{brand:"ABOUT",title:"About This Studio",blocks:5,
+            lede:"Congratulations. You found the About page where any reasonable person would have put it: four folders deep inside taxes_2014."});
+        }));
+      }));
+    }));
+  }));
+  mkIcon(desk,"🖼️","screenshot (4821).png",120,20,()=>openWindow("screenshot (4821).png",b=>b.innerHTML="<div class='doc'>A screenshot of another desktop, equally messy.</div>"));
+  mkIcon(desk,"🎮","definitely_work.exe",120,120,()=>openWindow("definitely_work.exe",b=>b.innerHTML="<div class='doc'>⚠ This program is not the About page and also possibly a virus.</div>"));
+  mkIcon(desk,"📁","Important Files",120,220,()=>openWindow("Important Files",b=>b.innerHTML="<div class='doc'>(empty)</div>"));
+  mkIcon(desk,"📁","backup_backup_final",120,320,()=>openWindow("backup_backup_final",b=>b.innerHTML="<div class='doc'>Inside: a single file named 'temp'. Inside that: nothing.</div>"));
+  </script>
+</body></html>

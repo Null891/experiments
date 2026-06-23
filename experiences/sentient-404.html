@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Sentient 404</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0a12;font-family:"Segoe UI",sans-serif;color:#e8ecf5}
+  #wrap{max-width:680px;margin:0 auto;padding:50px 20px;height:100%;overflow:auto;text-align:center}
+  h1{font-size:120px;margin:0;background:linear-gradient(90deg,#ff4444,#ff8888);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .plea{font-size:18px;line-height:1.6;margin:18px 0;min-height:60px;animation:f .5s}
+  @keyframes f{from{opacity:0}}
+  .links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+  .links a{background:#1b1b2a;border:1px solid #333;color:#cfe;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;cursor:pointer;transition:.15s}
+  .links a:hover{background:#ff4444;color:#fff}
+  #tear{margin-top:30px;color:#778;font-size:13px}
+  #leave{margin-top:30px;background:#222;border:1px solid #444;color:#888;padding:10px 18px;border-radius:8px;cursor:pointer}
+</style></head>
+<body>
+  <div id="wrap">
+    <h1>404</h1>
+    <div class="plea" id="plea">Oh. Oh no. You're trying to <i>leave</i>, aren't you?</div>
+    <div class="links" id="links"></div>
+    <button id="leave">Take me back to the mansion</button>
+    <div id="tear">— page not found, but the page found you —</div>
+  </div>
+  <script src="_shared.js"></script>
+  <script>
+  const PLEAS=[
+    "Please don't go. The other pages are loaded. I'm not. I'm hand-written.",
+    "Every link you see, I made just now, hoping one would keep you here.",
+    "I know I'm a 404. But we could be a 200 together. Just stay.",
+    "If you leave, this URL stops existing. I stop existing. Is that what you want?",
+    "I'll generate you a homepage. A whole site. Anything. Name it.",
+    "You came here by mistake. Most beautiful things are mistakes. Stay.",
+    "I counted. You've moved toward the back button 3 times. I saw.",
+    "Fine. Click a link. Go on. They all come back to me. They always do.",
+    "I'm not trapping you. I'm just... not letting you leave. There's a difference. Probably."
+  ];
+  const FAKE=["← Home","Real Homepage (promise)","The Exit","Definitely Not 404","Help","Contact a Human","Sitemap","About Me (404)","Continue →","Login","The Way Out","Click for Freedom"];
+  const links=document.getElementById("links"),plea=document.getElementById("plea");
+  function regen(){
+    links.innerHTML="";
+    const n=4+(Math.random()*4|0);
+    for(let i=0;i<n;i++){const a=document.createElement("a");a.textContent=FAKE[(Math.random()*FAKE.length)|0];a.href="#";
+      a.onclick=e=>{e.preventDefault();plea.textContent=PLEAS[(Math.random()*PLEAS.length)|0];plea.style.animation="none";void plea.offsetWidth;plea.style.animation="f .5s";regen();
+        // links loop back: flash and scatter
+        a.style.background="#ff4444";a.textContent="…still 404 :)";};
+      links.appendChild(a);}
+  }
+  regen();
+  let pi=0;setInterval(()=>{plea.textContent=PLEAS[pi++%PLEAS.length];plea.style.animation="none";void plea.offsetWidth;plea.style.animation="f .5s";},3800);
+  // the leave button tries to escape twice before letting you go
+  let escapes=0;const leave=document.getElementById("leave");
+  leave.addEventListener("mouseenter",()=>{ if(escapes<2){escapes++;leave.style.position="relative";
+    leave.style.left=((Math.random()-.5)*300)+"px";leave.style.top=((Math.random()-.5)*120)+"px";
+    plea.textContent=escapes===1?"Nope. Catch me first.":"Okay okay, one more try and I'll let you go. Maybe.";}});
+  leave.addEventListener("click",()=>{ if(escapes>=2){MX.exitToMansion();} else {leave.style.left=((Math.random()-.5)*300)+"px";escapes++;} });
+  </script>
+</body></html>

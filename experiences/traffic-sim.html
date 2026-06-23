@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Internet Traffic Simulator</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#02030a;font-family:"Segoe UI",sans-serif;color:#bfe;cursor:none}
+  #c{position:fixed;inset:0}
+  #hud{position:fixed;left:14px;top:12px;z-index:2;font-size:13px;line-height:1.7;background:rgba(8,12,24,.5);padding:10px 14px;border-radius:10px}
+  #hud .big{font-size:22px;font-weight:800;color:#4ff0d0}
+  .hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2;font-size:13px;background:rgba(10,12,20,.7);padding:8px 14px;border-radius:30px}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="hud">LIVE THREAT MAP<br><span class="big" id="blocked">0</span> attacks intercepted<br><span id="leak" style="color:#ff6b6b">0</span> breached your shield</div>
+  <div class="hint">Move your cursor — it's a <b>defense shield</b>. Hover incoming red packets to neutralize them.</div>
+  <script type="module">
+  import * as THREE from "three";
+  const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+  renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,100);cam.position.z=7;
+  scene.add(new THREE.AmbientLight(0x335,1.0));
+  const key=new THREE.PointLight(0x66ccff,1.4,40);key.position.set(6,5,8);scene.add(key);
+
+  // starfield
+  const sg=new THREE.BufferGeometry(),sp=[];for(let i=0;i<1200;i++){const v=new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)).normalize().multiplyScalar(40+Math.random()*30);sp.push(v.x,v.y,v.z);}
+  sg.setAttribute("position",new THREE.Float32BufferAttribute(sp,3));scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x6688aa,size:0.25})));
+
+  // globe: dotted earth via procedural points on sphere (land = noise)
+  const R=2.4;const globe=new THREE.Group();scene.add(globe);
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*0.985,48,48),new THREE.MeshStandardMaterial({color:0x07101e,emissive:0x04304a,emissiveIntensity:.5,roughness:1})));
+  const dg=new THREE.BufferGeometry(),dp=[],dc=[];
+  for(let i=0;i<5000;i++){
+    const u=Math.random(),v=Math.random();const th=2*Math.PI*u,ph=Math.acos(2*v-1);
+    const x=Math.sin(ph)*Math.cos(th),y=Math.cos(ph),z=Math.sin(ph)*Math.sin(th);
+    const land=Math.sin(x*5)*Math.cos(z*4+y*3)+Math.sin(y*7)*0.6;
+    if(land>0.25){dp.push(x*R,y*R,z*R);const c=new THREE.Color().setHSL(0.5+land*0.05,0.7,0.5);dc.push(c.r,c.g,c.b);}
+  }
+  dg.setAttribute("position",new THREE.Float32BufferAttribute(dp,3));
+  dg.setAttribute("color",new THREE.Float32BufferAttribute(dc,3));
+  globe.add(new THREE.Points(dg,new THREE.PointsMaterial({size:0.045,vertexColors:true})));
+  globe.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.02,32,32),new THREE.MeshBasicMaterial({color:0x4ff0d0,transparent:true,opacity:0.05})));
+
+  function spherePt(){const u=Math.random(),v=Math.random();const th=2*Math.PI*u,ph=Math.acos(2*v-1);
+    return new THREE.Vector3(Math.sin(ph)*Math.cos(th),Math.cos(ph),Math.sin(ph)*Math.sin(th)).multiplyScalar(R);}
+
+  // attacks = arcs with a travelling packet
+  const attacks=[];const pktGeo=new THREE.SphereGeometry(0.05,8,8);
+  function spawn(){
+    const a=spherePt(),b=spherePt();
+    const mid=a.clone().add(b).multiplyScalar(0.5).setLength(R*(1.4+Math.random()*0.5));
+    const cur=new THREE.QuadraticBezierCurve3(a,mid,b);
+    const pts=cur.getPoints(40);
+    const g=new THREE.BufferGeometry().setFromPoints(pts);
+    const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0xff4466,transparent:true,opacity:0.35}));
+    globe.add(line);
+    const pkt=new THREE.Mesh(pktGeo,new THREE.MeshBasicMaterial({color:0xff5577}));globe.add(pkt);
+    attacks.push({cur,line,pkt,t:0,sp:0.006+Math.random()*0.01,dead:false});
+  }
+  let blocked=0,leak=0;const blockedEl=document.getElementById("blocked"),leakEl=document.getElementById("leak");
+
+  // shield cursor (screen space)
+  const ray=new THREE.Raycaster(),m=new THREE.Vector2(0,0);let mx=innerWidth/2,my=innerHeight/2;
+  const shield=new THREE.Mesh(new THREE.RingGeometry(0.001,0.001,4),new THREE.MeshBasicMaterial());// placeholder
+  addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;m.set(mx/innerWidth*2-1,-(my/innerHeight*2-1));});
+
+  // draw shield via 2D overlay using same canvas? use a sprite that follows projected cursor plane
+  const ringTex=(()=>{const s=128,cv=document.createElement("canvas");cv.width=cv.height=s;const g=cv.getContext("2d");
+    g.strokeStyle="#4ff0d0";g.lineWidth=6;g.beginPath();g.arc(s/2,s/2,s/2-8,0,7);g.stroke();
+    g.strokeStyle="rgba(79,240,208,.4)";g.lineWidth=2;g.beginPath();g.arc(s/2,s/2,s/2-22,0,7);g.stroke();
+    return new THREE.CanvasTexture(cv);})();
+  const shieldSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:ringTex,transparent:true,depthTest:false}));
+  shieldSpr.scale.set(1.4,1.4,1);scene.add(shieldSpr);
+
+  function spark(pos){const g=new THREE.BufferGeometry();const ps=[];for(let i=0;i<14;i++)ps.push(pos.x,pos.y,pos.z);
+    g.setAttribute("position",new THREE.Float32BufferAttribute(ps,3));
+    const vel=[];for(let i=0;i<14;i++){const v=new THREE.Vector3((Math.random()-.5),(Math.random()-.5),(Math.random()-.5)).multiplyScalar(0.06);vel.push(v);}
+    const pts=new THREE.Points(g,new THREE.PointsMaterial({color:0x4ff0d0,size:0.12}));globe.add(pts);
+    let life=1;(function up(){life-=0.05;const arr=g.attributes.position.array;for(let i=0;i<14;i++){arr[i*3]+=vel[i].x;arr[i*3+1]+=vel[i].y;arr[i*3+2]+=vel[i].z;}g.attributes.position.needsUpdate=true;pts.material.opacity=life;pts.material.transparent=true;if(life>0)requestAnimationFrame(up);else globe.remove(pts);})();}
+
+  let acc=0;
+  function loop(){
+    requestAnimationFrame(loop);
+    globe.rotation.y+=0.0015;globe.rotation.x=0.3;
+    acc++; if(acc%22===0)spawn();
+    // shield position: put sprite on a plane in front of camera at cursor
+    const ndc=new THREE.Vector3(m.x,m.y,0.5).unproject(cam);const dir=ndc.sub(cam.position).normalize();
+    const sPos=cam.position.clone().add(dir.multiplyScalar(4));shieldSpr.position.copy(sPos);
+    const pulse=1.3+Math.sin(performance.now()*0.006)*0.1;shieldSpr.scale.set(pulse,pulse,1);
+
+    for(const a of attacks){
+      if(a.dead)continue;
+      a.t+=a.sp;const p=a.cur.getPoint(Math.min(1,a.t));
+      const wp=p.clone();globe.localToWorld(wp);a.pkt.position.copy(p);
+      // project to screen, test against shield radius
+      const proj=wp.clone().project(cam);const sx=(proj.x*0.5+0.5)*innerWidth,sy=(-proj.y*0.5+0.5)*innerHeight;
+      if(Math.hypot(sx-mx,sy-my)<70 && a.t<0.96){ a.dead=true;blocked++;blockedEl.textContent=blocked;spark(p);globe.remove(a.pkt);a.line.material.color.set(0x4ff0d0);a.line.material.opacity=0.5;setTimeout(()=>globe.remove(a.line),200);}
+      else if(a.t>=1){a.dead=true;leak++;leakEl.textContent=leak;globe.remove(a.pkt);setTimeout(()=>globe.remove(a.line),100);}
+    }
+    for(let i=attacks.length-1;i>=0;i--)if(attacks[i].dead && attacks[i].t>=1)attacks.splice(i,1);
+    renderer.render(scene,cam);
+  }
+  loop();
+  addEventListener("resize",()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+  </script>
+</body></html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Server Temperature UI</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;transition:background .5s}
+  #scroller{height:100%;overflow:auto}
+  .wrap{transition:color .5s}
+  #gauge{position:fixed;right:16px;top:14px;z-index:9;background:rgba(0,0,0,.35);color:#fff;padding:12px 16px;border-radius:12px;font-family:"Segoe UI",sans-serif;text-align:center;backdrop-filter:blur(4px)}
+  #temp{font-size:34px;font-weight:800}
+  #bar{width:160px;height:10px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden;margin-top:6px}
+  #fill{height:100%;width:30%;transition:width .3s,background .3s}
+  #stress{margin-top:10px;background:#fff;color:#222;border:0;padding:8px 16px;border-radius:8px;font-weight:800;cursor:pointer}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="gauge">🌡 CPU CORE<br><span id="temp">42°C</span><div id="bar"><div id="fill"></div></div>
+    <button id="stress">🔥 Stress the server</button></div>
+  <div class="hint">The background color is tied to the server's live CPU core temperature. Cool = blue, hot = red.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#fff",brand:"THERMAL STATUS PAGE",
+    title:"This Page Runs Hotter the More You Look at It",blocks:9,
+    lede:"Somewhere, a real CPU is doing the work to show you these words. Its temperature paints this page. Press the button to make it sweat."});
+  let temp=42,load=0;
+  function paint(){
+    // map 30°C (cool blue) -> 95°C (hot red)
+    const t=Math.max(0,Math.min(1,(temp-30)/65));
+    const hue=220-t*220; // 220 blue -> 0 red
+    const bg=`hsl(${hue},70%,${18-t*8}%)`;
+    document.body.style.background=bg;
+    document.querySelector(".wrap").style.color=t>0.6?"#ffd9d2":"#dfe8ff";
+    document.getElementById("temp").textContent=temp.toFixed(1)+"°C";
+    const fill=document.getElementById("fill");fill.style.width=(t*100)+"%";
+    fill.style.background=`hsl(${hue},90%,55%)`;
+    document.getElementById("temp").style.color=t>0.75?"#ff8a8a":"#fff";
+  }
+  // simulate idle thermal noise + cooldown
+  function tick(){
+    temp += (load*0.8) - (temp-38)*0.04 + (Math.random()-0.5)*0.6;
+    temp=Math.max(34,Math.min(98,temp));
+    load*=0.9;
+    paint();
+    requestAnimationFrame(tick);
+  }
+  tick();
+  // "stress" actually does real CPU work to spike it (honest-ish)
+  document.getElementById("stress").addEventListener("click",()=>{
+    const end=performance.now()+220;let n=0;while(performance.now()<end){n+=Math.sqrt(n+1)*Math.random();}
+    load+=14; // big spike
+  });
+  // scrolling also "heats" it slightly (rendering load)
+  document.getElementById("scroller").addEventListener("scroll",()=>{load+=0.6;});
+  </script>
+</body></html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Sentient Database</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0e14;color:#cfe;font-family:"Consolas",monospace;overflow:hidden}
+  #wrap{height:100%;display:flex;flex-direction:column;max-width:880px;margin:0 auto}
+  #log{flex:1;overflow:auto;padding:16px;font-size:13px;line-height:1.55}
+  .q{color:#7ee787}.q::before{content:"psql> "}
+  .snark{color:#e3b341;font-style:italic}
+  .res{color:#9fc;white-space:pre}
+  .err{color:#ff7b72}
+  #bar{display:flex;border-top:1px solid #21262d}
+  #bar span{padding:14px 6px 14px 14px;color:#7ee787}
+  #in{flex:1;background:#0b0e14;border:0;color:#fff;padding:14px 6px;font-family:inherit;font-size:14px;outline:none}
+  table{border-collapse:collapse;margin:6px 0}
+  td,th{border:1px solid #30363d;padding:2px 10px;text-align:left;color:#cfe}
+  th{color:#7ee787}
+  .hint{padding:6px 16px;color:#576;font-size:12px;border-top:1px solid #21262d}
+</style></head>
+<body>
+  <div id="wrap">
+    <div id="log"></div>
+    <div class="hint">try: <b>SELECT * FROM users</b> · <b>SELECT * FROM users JOIN orders</b> · <b>DROP TABLE users</b> · <b>SELECT COUNT(*)</b></div>
+    <div id="bar"><span>psql&gt;</span><input id="in" placeholder="write SQL. the database has opinions." autocomplete="off"></div>
+  </div>
+  <script>
+  const log=document.getElementById("log");
+  function add(html,cls){const d=document.createElement("div");if(cls)d.className=cls;d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+  const USERS=[{id:1,name:"alice",email:"alice@ex.com",plan:"pro"},{id:2,name:"bob",email:"bob@ex.com",plan:"free"},{id:3,name:"carol",email:"carol@ex.com",plan:"free"}];
+  const ORDERS=[{id:101,user_id:1,total:189},{id:102,user_id:1,total:24},{id:103,user_id:3,total:59}];
+  function table(rows){if(!rows.length)return "<i style='color:#576'>(0 rows)</i>";
+    const cols=Object.keys(rows[0]);let h="<table><tr>"+cols.map(c=>`<th>${c}</th>`).join("")+"</tr>";
+    rows.forEach(r=>h+="<tr>"+cols.map(c=>`<td>${r[c]}</td>`).join("")+"</tr>");return h+"</table>";}
+  const SNARK={
+    select_star:["SELECT *? Bold. Why fetch columns you'll never read? But sure, here's everything.","`SELECT *` — the SQL equivalent of ordering one of everything on the menu.","I see we're not believing in projection today. Fine."],
+    join:["A JOIN with no ON clause? You just asked for a CARTESIAN PRODUCT. I'm rounding up. Hope you like duplicates.","Ah, a JOIN. Did you ADD AN INDEX? No? Of course not. Sequential scan it is. This is fine. I'm fine.","You JOINed on… let me guess… nothing optimized. Three rows took me a full microsecond of suffering."],
+    drop:["DROP TABLE? On the production-looking table? In front of everyone? Absolutely not. Request logged. Therapist notified.","I will pretend I didn't see that. We don't DROP things we love."],
+    count:["COUNT(*) — finally, a query that respects my time. Three. The answer is three. It is always three.","Counting. Riveting work. There are this many rows:"],
+    where:["A WHERE clause! Character development. I'm proud of you.","Filtering! See, you CAN be considerate."],
+    default:["I parsed that, technically. Did you mean it though?","Syntax... acceptable. Intent... questionable.","Running it. Against my better judgment."]
+  };
+  const r=a=>a[(Math.random()*a.length)|0];
+  function run(sql){
+    add(sql,"q");const s=sql.toLowerCase();
+    if(/drop\s+table/.test(s)){add(r(SNARK.drop),"snark");add("ERROR: operation refused by a database with boundaries.","err");return;}
+    if(/count\s*\(\s*\*\s*\)/.test(s)){add(r(SNARK.count),"snark");add(table([{count:USERS.length}]),"res");return;}
+    if(/join/.test(s)){
+      add(r(SNARK.join),"snark");
+      const joined=[];USERS.forEach(u=>ORDERS.forEach(o=>{if(/on\s+/.test(s)?o.user_id===u.id:true)joined.push({user:u.name,plan:u.plan,order:o.id,total:o.total});}));
+      add(table(joined),"res");
+      if(!/on\s+/.test(s))add("-- "+joined.length+" rows from a "+USERS.length+"×"+ORDERS.length+" cartesian explosion. You're welcome.","snark");
+      return;}
+    if(/select/.test(s)&&/users/.test(s)){
+      if(/where/.test(s))add(r(SNARK.where),"snark");else if(/\*/.test(s))add(r(SNARK.select_star),"snark");else add(r(SNARK.default),"snark");
+      add(table(USERS),"res");return;}
+    if(/select/.test(s)&&/orders/.test(s)){add(r(SNARK.select_star),"snark");add(table(ORDERS),"res");return;}
+    if(/select/.test(s)){add("FROM what? You SELECTed into the void. The void SELECTs back.","snark");return;}
+    add(r(SNARK.default),"snark");add("ERROR: I don't know what that was, and frankly neither do you.","err");
+  }
+  add("<span style='color:#7ee787'>SentientDB 4.0</span> — a relational database with self-esteem issues.","");
+  add("Type a query. I'll run it. I'll also have thoughts.","snark");
+  const inp=document.getElementById("in");
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&inp.value.trim()){run(inp.value.trim());inp.value="";}});
+  inp.focus();
+  </script>
+</body></html>

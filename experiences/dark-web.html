@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Dark Web Crawler</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#050505;color:#0c6;font-family:"Consolas",monospace}
+  #wrap{display:grid;grid-template-columns:280px 1fr;height:100%}
+  #list{background:#070707;border-right:1px solid #0a3;overflow:auto;padding:12px;font-size:12px}
+  .svc{padding:7px 8px;border:1px solid #0a2a18;border-radius:6px;margin-bottom:7px;cursor:pointer;color:#0c6}
+  .svc:hover,.svc.sel{background:#0a1a12;border-color:#0f6}
+  .svc .a{color:#063;font-size:10px;word-break:break-all}
+  .red{background:#000;color:#000;padding:0 2px;border-radius:2px;user-select:none}
+  #gallery{position:relative;overflow:hidden}
+  #art{position:absolute;inset:0}
+  #cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);padding:12px 16px;font-size:13px}
+  #scan{position:absolute;right:16px;top:14px;z-index:3;background:#0c6;border:0;color:#020;padding:9px 16px;border-radius:6px;font-weight:800;cursor:pointer;font-family:inherit}
+  .hint{position:absolute;left:296px;top:14px;font-size:11px;color:#063}
+</style></head>
+<body>
+  <div id="wrap">
+    <div id="list"><div style="color:#063;margin-bottom:8px">◢ TOR HIDDEN SERVICES (crawled)</div><div id="svcs"></div></div>
+    <div id="gallery"><canvas id="art"></canvas><button id="scan">⟳ Re-crawl network</button>
+      <div class="hint">titles are scraped, redacted, then rendered as abstract art</div>
+      <div id="cap">select a hidden service →</div></div>
+  </div>
+  <script>
+  const A=["the silent","black","midnight","onion","ghost","hollow","grey","null","cipher","forgotten","drowned","static","velvet","ash"];
+  const B=["market","archive","library","exchange","forum","vault","relay","mirror","registry","collective","node","garden","press","channel"];
+  const REDACT=["████","███","██████","█████","██","███████"];
+  function onion(){let s="";const c="abcdefghijklmnopqrstuvwxyz234567";for(let i=0;i<56;i++)s+=c[(Math.random()*c.length)|0];return s+".onion";}
+  function title(){const w=[A[(Math.random()*A.length)|0],B[(Math.random()*B.length)|0]];
+    // randomly redact a word
+    return w.map(x=>Math.random()<0.4?REDACT[(Math.random()*REDACT.length)|0]:x).join(" ");}
+  const cv=document.getElementById("art"),x=cv.getContext("2d");
+  function rs(){cv.width=cv.clientWidth;cv.height=cv.clientHeight;}addEventListener("resize",()=>{rs();});
+  let services=[];
+  function crawl(){
+    services=[];const L=document.getElementById("svcs");L.innerHTML="";
+    for(let i=0;i<16;i++){const s={title:title(),addr:onion(),seed:Math.random()*1e9|0};services.push(s);
+      const el=document.createElement("div");el.className="svc";
+      el.innerHTML=`<div>▸ ${s.title}</div><div class="a">${s.addr}</div>`;
+      el.onclick=()=>{document.querySelectorAll(".svc").forEach(e=>e.classList.remove("sel"));el.classList.add("sel");render(s);};
+      L.appendChild(el);}
+    render(services[0]);document.querySelector(".svc")?.classList.add("sel");
+  }
+  function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function render(s){
+    rs();const r=mulberry(s.seed),W=cv.width,H=cv.height;
+    x.fillStyle="#040404";x.fillRect(0,0,W,H);
+    // abstract glitch composition in monochrome green
+    for(let i=0;i<60;i++){const t=r();x.globalAlpha=0.2+r()*0.5;
+      if(t<0.4){x.fillStyle=`rgba(0,${120+r()*120|0},${60+r()*60|0},1)`;x.fillRect(r()*W,r()*H,r()*W*0.4,r()*4+1);}
+      else if(t<0.7){x.strokeStyle=`rgba(0,${150+r()*100|0},90,1)`;x.lineWidth=r()*3;x.beginPath();x.moveTo(r()*W,r()*H);x.lineTo(r()*W,r()*H);x.stroke();}
+      else{x.fillStyle=`rgba(${r()*40|0},${100+r()*100|0},${r()*80|0},1)`;x.beginPath();x.arc(r()*W,r()*H,r()*80,0,7);x.fill();}}
+    x.globalAlpha=1;
+    // big black censor bars
+    for(let i=0;i<5+r()*5;i++){x.fillStyle="#000";x.fillRect(r()*W,r()*H,r()*W*0.5+30,r()*40+10);}
+    // scanlines
+    x.fillStyle="rgba(0,0,0,.25)";for(let y=0;y<H;y+=3)x.fillRect(0,y,W,1);
+    document.getElementById("cap").innerHTML=`▸ <b>${s.title}</b> &nbsp; <span style="color:#063">${s.addr}</span><br><span style="color:#063">render seed ${s.seed} · content redacted for safety</span>`;
+  }
+  document.getElementById("scan").onclick=crawl;
+  crawl();
+  </script>
+</body></html>

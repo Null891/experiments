@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The 7-Month Mars Ping</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0510;color:#e8d8f0;font-family:"Segoe UI",sans-serif}
+  #space{position:fixed;inset:0;z-index:0}
+  #chat{position:fixed;right:0;top:0;bottom:0;width:min(420px,100vw);background:rgba(10,6,18,.82);backdrop-filter:blur(8px);
+    border-left:1px solid #3a2a4a;display:flex;flex-direction:column;z-index:2}
+  #hd{padding:12px 16px;border-bottom:1px solid #3a2a4a;font-weight:700}
+  #hd small{display:block;color:#a98;font-weight:400}
+  #log{flex:1;overflow:auto;padding:14px}
+  .m{max-width:80%;margin:8px 0;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.4}
+  .me{background:#5a3a8a;margin-left:auto;border-bottom-right-radius:4px}
+  .mars{background:#7a3a2a;border-bottom-left-radius:4px}
+  .transit{background:rgba(255,255,255,.08);font-size:12px;color:#cb9;text-align:center;max-width:100%;border-radius:8px}
+  #bar{display:flex;gap:8px;padding:12px;border-top:1px solid #3a2a4a}
+  #bar input{flex:1;padding:11px;border-radius:20px;border:1px solid #4a3a5a;background:#160f24;color:#fff}
+  #bar button{padding:0 18px;border:0;border-radius:20px;background:#a06bff;color:#120a22;font-weight:700;cursor:pointer}
+  #mode{position:fixed;left:14px;top:12px;z-index:3;font-size:12px;background:rgba(10,6,18,.7);padding:8px 12px;border-radius:8px}
+  #mode button{background:#2a1a3a;color:#cb9;border:1px solid #4a3a5a;border-radius:6px;padding:4px 8px;cursor:pointer;margin-left:6px}
+</style></head>
+<body>
+  <canvas id="space"></canvas>
+  <div id="mode">⏱ light-delay: <span id="dl">14 min</span><button id="speed">use demo speed (14s)</button></div>
+  <div id="chat">
+    <div id="hd">📡 Chat with Mars Outpost <small id="dist">distance: ~225,000,000 km · one-way light delay 12.5 min</small></div>
+    <div id="log"></div>
+    <div id="bar"><input id="in" placeholder="Message takes 14 min to arrive…"><button id="send">Send</button></div>
+  </div>
+  <script>
+  // starfield + two planets
+  const cv=document.getElementById("space"),x=cv.getContext("2d");
+  let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
+  const stars=Array.from({length:200},()=>({x:Math.random(),y:Math.random(),z:Math.random()}));
+  let packets=[];
+  function frame(t){requestAnimationFrame(frame);
+    x.fillStyle="#0a0510";x.fillRect(0,0,W,H);
+    stars.forEach(s=>{x.fillStyle=`rgba(220,210,255,${s.z})`;x.fillRect(s.x*W*0.7,s.y*H,s.z*2,s.z*2);});
+    // Earth (left) and Mars (right)
+    const ex=W*0.16,ey=H*0.5,marsx=W*0.62,marsy=H*0.32;
+    x.fillStyle="#3a78d0";x.beginPath();x.arc(ex,ey,34,0,7);x.fill();x.fillStyle="#2a5a2a";x.beginPath();x.arc(ex-8,ey+6,12,0,7);x.fill();
+    x.fillStyle="#c1502e";x.beginPath();x.arc(marsx,marsy,22,0,7);x.fill();
+    // packets in transit
+    packets.forEach(p=>{const px=ex+(marsx-ex)*p.prog*(p.dir>0?1:1),py=ey+(marsy-ey)*p.prog;
+      const sx=p.dir>0?ex:marsx,sy=p.dir>0?ey:marsy,dx2=p.dir>0?marsx:ex,dy2=p.dir>0?marsy:ey;
+      const cx=sx+(dx2-sx)*p.prog,cy=sy+(dy2-sy)*p.prog;
+      x.fillStyle="#ffe08a";x.beginPath();x.arc(cx,cy,4,0,7);x.fill();
+      x.strokeStyle="rgba(255,224,138,.3)";x.beginPath();x.moveTo(sx,sy);x.lineTo(cx,cy);x.stroke();});
+    requestAnimationFrame;}
+  frame();
+
+  let DELAY=14000; // demo: 14s (represents 14 min)
+  let realMode=false;
+  document.getElementById("speed").onclick=()=>{realMode=!realMode;DELAY=realMode?14*60*1000:14000;
+    document.getElementById("dl").textContent=realMode?"14 min (real)":"14 s (demo)";
+    document.getElementById("speed").textContent=realMode?"use demo speed (14s)":"use REAL speed (14 min)";};
+
+  const log=document.getElementById("log");
+  function add(t,cls){const d=document.createElement("div");d.className="m "+cls;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d;}
+  const REPLIES=["Copy that. It's cold here. -73°C and dropping.","Your message took 14 minutes. So did this one. We are always 28 minutes apart, you and I.","The dust storm finally cleared. I can see Earth — a blue dot. You're on it. Wave.","Acknowledged. Tell mission control the greenhouse is holding.","I keep forgetting you can't answer quickly. Nobody can, out here.","Received. Lonely is just latency you can't fix."];
+  function transit(label){const d=add(label+" — in transit…",("transit"));let p={prog:0,dir:1};packets.push(p);
+    const start=performance.now();const iv=setInterval(()=>{p.prog=Math.min(1,(performance.now()-start)/DELAY);
+      const rem=Math.max(0,DELAY-(performance.now()-start));d.textContent=label+" — arriving in "+(rem/1000).toFixed(0)+"s";
+      if(p.prog>=1){clearInterval(iv);packets=packets.filter(q=>q!==p);}},200);return DELAY;}
+  function send(){const v=document.getElementById("in").value.trim();if(!v)return;document.getElementById("in").value="";
+    add(v,"me");const t=transit("📤 your message → Mars");
+    setTimeout(()=>{add("✓ delivered to Mars Outpost","transit");
+      // Mars composes + replies (another full delay back)
+      setTimeout(()=>{transit("📥 Mars → Earth");setTimeout(()=>add(REPLIES[(Math.random()*REPLIES.length)|0],"mars"),DELAY);},1200);
+    },t);}
+  document.getElementById("send").onclick=send;
+  document.getElementById("in").addEventListener("keydown",e=>{if(e.key==="Enter")send();});
+  add("MARS OUTPOST: Connection established. Every message between us is delayed by the speed of light. Patience is the only protocol.","mars");
+  </script>
+</body></html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Steganography Gallery</title>
+<style>
+  html,body{margin:0;height:100%;background:#16181d;color:#eee;font-family:"Segoe UI",sans-serif;overflow:hidden}
+  #wrap{display:grid;grid-template-columns:1fr 380px;height:100%}
+  #gallery{padding:24px;overflow:auto}
+  #gallery h2{font-weight:300;letter-spacing:2px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:16px}
+  .ph{border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:.15s}
+  .ph:hover{border-color:#5af;transform:translateY(-2px)}
+  .ph canvas{display:block;width:100%}
+  .ph .cap{font-size:12px;padding:6px 8px;color:#aaa}
+  #hex{background:#0a0c10;border-left:1px solid #2a2d36;display:flex;flex-direction:column}
+  #hexhd{padding:12px 14px;border-bottom:1px solid #2a2d36;font-weight:700;font-family:Consolas}
+  #hexout{flex:1;overflow:auto;padding:12px;font-family:"Consolas",monospace;font-size:11px;line-height:1.5;color:#7c9;white-space:pre}
+  .sig{color:#ffd479}.secret{color:#3dff7a}
+  .hint{position:fixed;left:16px;bottom:14px;font-size:12px;color:#789}
+</style></head>
+<body>
+  <div id="wrap">
+    <div id="gallery"><h2>◳ ATELIER — photography</h2>
+      <p style="color:#888">A perfectly ordinary portfolio. Click a photo to "download" it and inspect its raw bytes…</p>
+      <div class="grid" id="grid"></div></div>
+    <div id="hex"><div id="hexhd">🔬 hex inspector</div><div id="hexout">select an image to dump its bytes →</div></div>
+  </div>
+  <div class="hint">Each JPEG hides a ZIP appended after the image data — the real website is steganographically inside.</div>
+  <script>
+  const TITLES=["Fog over Saltmarsh","Untitled (Concrete)","Morning, 6:14am","The Long Hallway","Static Sea","Window #9","Pylon","Negative Space","Late Ferry","Roof Garden","Closed for Winter","The Blue Hour"];
+  const SECRETS=["mansion://room-082/the-real-site","passphrase: heliotrope-9","the gallery is a cover","look in the 4th photo","you found the hidden archive","decryption key: 0xC0FFEE"];
+  function art(cv,seed){const g=cv.getContext("2d"),W=cv.width=150,H=cv.height=110;
+    let s=seed;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+    const h=r()*360;g.fillStyle=`hsl(${h},20%,${20+r()*40}%)`;g.fillRect(0,0,W,H);
+    for(let i=0;i<40;i++){g.globalAlpha=.1+r()*.3;g.fillStyle=`hsl(${h+r()*60-30},${30+r()*40}%,${30+r()*50}%)`;
+      if(r()<.5)g.fillRect(r()*W,r()*H,r()*W*.4,r()*H*.4);else{g.beginPath();g.arc(r()*W,r()*H,r()*40,0,7);g.fill();}}
+    g.globalAlpha=1;g.fillStyle="rgba(0,0,0,.15)";for(let y=0;y<H;y+=2)g.fillRect(0,y,W,1);}
+  function hexdump(title,secret,seed){
+    let out="";const bytes=[];
+    // fake JPEG header
+    const head=[0xFF,0xD8,0xFF,0xE0,0x00,0x10,0x4A,0x46,0x49,0x46];
+    let s=seed;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s&0xff;};
+    for(let i=0;i<128;i++)bytes.push(i<head.length?head[i]:r());
+    bytes.push(0xFF,0xD9); // JPEG EOI
+    // appended ZIP signature + hidden payload
+    const zipSig=[0x50,0x4B,0x03,0x04]; // PK..
+    bytes.push(...zipSig);
+    const payload="SECRET="+secret+";";
+    for(const ch of payload)bytes.push(ch.charCodeAt(0));
+    // render hex
+    let html="";
+    for(let i=0;i<bytes.length;i+=16){
+      let off=i.toString(16).padStart(6,"0");
+      let hexs="",asc="";
+      for(let j=0;j<16;j++){const b=bytes[i+j];if(b===undefined){hexs+="   ";asc+=" ";continue;}
+        const hx=b.toString(16).padStart(2,"0")+" ";const ch=(b>=32&&b<127)?String.fromCharCode(b):".";
+        const inSig=(i+j>=130&&i+j<134),inSec=(i+j>=134);
+        hexs+=inSig?`<span class="sig">${hx}</span>`:inSec?`<span class="secret">${hx}</span>`:hx;
+        asc+=inSig?`<span class="sig">${ch}</span>`:inSec?`<span class="secret">${ch}</span>`:ch;}
+      html+=off+"  "+hexs+" |"+asc+"|\n";
+    }
+    html+=`\n<span class="sig">↑ at offset 0x82 the JPEG ends and a PK ZIP begins.</span>\n<span class="secret">↑ hidden payload: ${secret}</span>`;
+    document.getElementById("hexout").innerHTML=`<b style="color:#eee">${title}.jpg</b> · ${bytes.length} bytes\n\n`+html;
+  }
+  const grid=document.getElementById("grid");
+  TITLES.forEach((t,i)=>{const seed=(i+1)*9173;
+    const d=document.createElement("div");d.className="ph";const cv=document.createElement("canvas");art(cv,seed);
+    d.appendChild(cv);const cap=document.createElement("div");cap.className="cap";cap.textContent=t+".jpg";d.appendChild(cap);
+    d.onclick=()=>hexdump(t,SECRETS[i%SECRETS.length],seed);grid.appendChild(d);});
+  </script>
+</body></html>

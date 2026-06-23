@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The API Blackhole</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0c14;color:#e8ecf5;font-family:"Segoe UI",sans-serif;overflow:hidden}
+  #grid{display:grid;grid-template-columns:300px 1fr;height:100%}
+  #feeds{background:#0d1020;border-right:1px solid #1b2333;overflow:auto;padding:14px;font-family:"Consolas",monospace;font-size:12px}
+  .feed{border:1px solid #1b2740;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+  .feed h4{margin:0 0 4px;color:#5af;font-family:"Segoe UI"}
+  .feed pre{margin:0;color:#9fc;white-space:pre-wrap;word-break:break-word}
+  #story{padding:30px 40px;overflow:auto;max-width:760px}
+  #story h1{font-size:34px;background:linear-gradient(90deg,#ff8a5c,#ff5fa2);-webkit-background-clip:text;background-clip:text;color:transparent}
+  #story p{line-height:1.7;font-size:17px;color:#d8dce8}
+  #go{position:fixed;right:24px;bottom:20px;z-index:5;background:#ff8a5c;border:0;color:#201400;padding:13px 24px;border-radius:30px;font-weight:800;cursor:pointer}
+  .hint{position:fixed;left:316px;top:12px;font-size:12px;color:#789}
+</style></head>
+<body>
+  <div id="grid">
+    <div id="feeds"><div style="color:#789;margin-bottom:8px">◢ LIVE FEEDS (pulled fresh)</div><div id="feedlist"></div></div>
+    <div id="story"><div class="hint">an engine weaves unrelated data into one story →</div><div id="out"></div></div>
+  </div>
+  <button id="go">⟳ Pull new feeds & re-weave</button>
+  <script src="_shared.js"></script>
+  <script>
+  const CITIES=["Reykjavík","Ulaanbaatar","La Paz","Hobart","Tromsø","Kiribati","Yakutsk"];
+  const CONDS=["sideways sleet","a suspicious calm","ash-colored fog","37 simultaneous rainbows","no weather at all"];
+  const NASA=["a galaxy shaped like a question mark","a moon that hums in B-flat","a comet 600 years overdue","a black hole the size of a regret"];
+  const ANIMALS=["axolotl","pangolin","mantis shrimp","tardigrade","cassowary"];
+  const WORDS=["velvet","tax law","the number 7","a forgotten password","Tuesday","a lighthouse","sourdough"];
+  function rnd(a){return a[(Math.random()*a.length)|0];}
+  function pullFeeds(){
+    return {
+      weather:{city:rnd(CITIES),temp:(Math.random()*60-20|0),cond:rnd(CONDS)},
+      crypto:{coin:rnd(["BTC","ETH","DOGE","XMR"]),price:(Math.random()*70000|0),chg:((Math.random()*40-20)).toFixed(2)},
+      nasa:{apod:rnd(NASA)},
+      catfact:{fact:"A "+rnd(ANIMALS)+" can "+rnd(["sleep for 3 years","see polarized light","regrow its own limbs","survive in space","taste with its feet"])+"."},
+      number:{n:(Math.random()*9999|0),prop:rnd(["is the only number that does that","appears in no known phone book","was outlawed in 1640","means 'hello' in a dead language"])},
+      word:{w:rnd(WORDS)},
+      color:{hex:"#"+Math.floor(Math.random()*16777215).toString(16).padStart(6,"0")}
+    };
+  }
+  function showFeeds(f){
+    const L=document.getElementById("feedlist");L.innerHTML="";
+    const map={"🌦 weather.api":f.weather,"💰 crypto.api":f.crypto,"🛰 nasa.apod":f.nasa,"🐾 fact.api":f.catfact,"🔢 numbers.api":f.number,"📖 word.api":f.word,"🎨 color.api":f.color};
+    for(const k in map){const d=document.createElement("div");d.className="feed";d.innerHTML=`<h4>${k}</h4><pre>${JSON.stringify(map[k],null,1)}</pre>`;L.appendChild(d);}
+  }
+  function weave(f){
+    document.body.style.setProperty("--c",f.color.hex);
+    const story=
+`It was ${f.weather.temp}° and ${f.weather.cond} in ${f.weather.city} the morning the ${f.crypto.coin} chart moved ${f.crypto.chg}%. ` +
+`Nobody noticed, because everyone was looking up at ${f.nasa.apod}. ` +
+`\n\nThe only witness was an old researcher who knew that ${f.catfact.fact.toLowerCase()} She had built her entire theory around the number ${f.number.n}, which, she insisted, ${f.number.prop}. ` +
+`\n\nWhen they asked her what it all meant, she said only one word — "${f.word.w}" — and painted the wall the exact color ${f.color.hex}. ` +
+`\n\nThe ${f.crypto.coin} hit $${f.crypto.price} that night. In ${f.weather.city}, the ${f.weather.cond} continued. Somewhere, the ${f.nasa.apod.split(" ").slice(-3).join(" ")} hummed on, indifferent, eternal.`;
+    const out=document.getElementById("out");out.innerHTML="";
+    const h=document.createElement("h1");h.textContent="The "+f.word.w.replace(/^a /,"").replace(/\b\w/,c=>c.toUpperCase())+" Dispatch";out.appendChild(h);
+    story.split("\n\n").forEach(par=>{const p=document.createElement("p");p.textContent=par;out.appendChild(p);});
+  }
+  function go(){const f=pullFeeds();showFeeds(f);weave(f);}
+  document.getElementById("go").onclick=go;go();
+  </script>
+</body></html>

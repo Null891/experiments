@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Read-Mind Predictor</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto}
+  .target{display:inline-block;margin:8px;padding:14px 22px;border-radius:10px;background:#eee;border:2px solid #ddd;
+    cursor:pointer;font-weight:700;font-family:"Segoe UI",sans-serif;transition:all .15s}
+  .pred{background:#ff6fb5!important;border-color:#ff2e96!important;color:#fff!important;
+    box-shadow:0 0 0 4px rgba(255,46,150,.25),0 8px 24px rgba(255,46,150,.35);transform:scale(1.06)}
+  #stat{position:fixed;left:16px;top:14px;z-index:9;font-family:"Segoe UI",sans-serif;background:rgba(20,16,30,.85);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6}
+  #stat .acc{font-size:20px;font-weight:800;color:#ff6fb5}
+  #grid{padding:30px;display:flex;flex-wrap:wrap;max-width:760px;margin:0 auto}
+</style></head>
+<body>
+  <div id="scroller">
+    <div class="wrap"><h1 class="title" style="font-family:'Segoe UI'">It already knows which button you'll click.</h1>
+      <p class="lede">A model watches your cursor's velocity, heading, and dwell. It pre-highlights its prediction <b>before</b> you arrive. Try to fool it.</p>
+      <div id="grid"></div>
+    </div>
+  </div>
+  <div id="stat">PREDICTION ACCURACY<br><span class="acc" id="acc">—</span><br><span id="hits">0</span>/<span id="tot">0</span> correct</div>
+  <div class="hint">Hover toward any button. The model (pink) guesses your target. Click to score it.</div>
+  <script src="_shared.js"></script>
+  <script>
+  const LABELS=["Home","Pricing","Login","Docs","Blog","Careers","Download","Contact","Features","Changelog","Status","Community","Roadmap","Privacy","Sign Up","API","Support","Demo"];
+  const grid=document.getElementById("grid");
+  const buttons=LABELS.map(l=>{const b=document.createElement("button");b.className="target";b.textContent=l;grid.appendChild(b);return b;});
+  let mx=0,my=0,pmx=0,pmy=0,vx=0,vy=0,pred=null,hits=0,tot=0;
+  addEventListener("mousemove",e=>{vx=e.clientX-pmx;vy=e.clientY-pmy;pmx=mx;pmy=my;mx=e.clientX;my=e.clientY;});
+  function predict(){
+    // project cursor forward along velocity; score each button by alignment+proximity
+    let best=null,bestS=-1e9;
+    const sp=Math.hypot(vx,vy);
+    const fx=mx+vx*14,fy=my+vy*14; // projected landing point
+    for(const b of buttons){const r=b.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
+      const toX=cx-mx,toY=cy-my,d=Math.hypot(toX,toY)||1;
+      const align=sp>1?(toX*vx+toY*vy)/(d*sp):0;     // heading alignment -1..1
+      const projD=Math.hypot(cx-fx,cy-fy);
+      const score=align*2.2 - projD/300 - d/2000;
+      if(score>bestS){bestS=score;best=b;}}
+    if(best!==pred){if(pred)pred.classList.remove("pred");pred=best;if(pred)pred.classList.add("pred");}
+  }
+  setInterval(predict,60);
+  buttons.forEach(b=>b.addEventListener("click",()=>{
+    tot++;if(b===pred)hits++;
+    document.getElementById("hits").textContent=hits;document.getElementById("tot").textContent=tot;
+    document.getElementById("acc").textContent=Math.round(hits/tot*100)+"%";
+    b.style.background="#222";b.style.color="#fff";setTimeout(()=>{b.style.background="";b.style.color="";},250);
+  }));
+  </script>
+</body></html>

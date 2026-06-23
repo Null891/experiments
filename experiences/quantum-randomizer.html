@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Quantum Randomizer</title>
+<style>
+  html,body{margin:0;height:100%;overflow:auto}
+  #q{position:fixed;right:14px;top:12px;z-index:9;font-family:"Segoe UI",sans-serif;font-size:12px;
+    background:rgba(10,12,22,.85);color:#9fe;padding:8px 12px;border-radius:8px;line-height:1.5}
+  .hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9;font-family:"Segoe UI",sans-serif;font-size:13px;background:rgba(10,12,20,.8);color:#fff;padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <div id="app"></div>
+  <div id="q">⚛ QUANTUM SEED: <span id="seed">…</span><br>source: <span id="src">measuring…</span></div>
+  <div class="hint">Every byte of CSS here was randomized from a quantum source. <b>Reload</b> for a brand-new universe.</div>
+  <script src="_shared.js"></script>
+  <script>
+  // Try a real quantum RNG; gracefully fall back to crypto.getRandomValues.
+  async function quantumBytes(n){
+    try{
+      const r=await fetch("https://qrng.anu.edu.au/API/jsonI.php?length="+n+"&type=uint8",{signal:AbortSignal.timeout(2500)});
+      const j=await r.json();if(j&&j.data){document.getElementById("src").textContent="ANU quantum lab (vacuum fluctuations)";return j.data;}
+    }catch(e){}
+    document.getElementById("src").textContent="crypto.getRandomValues (quantum lab unreachable)";
+    const a=new Uint8Array(n);crypto.getRandomValues(a);return [...a];
+  }
+  function rnd(b,i){return b[i%b.length]/255;}
+  (async()=>{
+    const B=await quantumBytes(64);
+    document.getElementById("seed").textContent=B.slice(0,6).join(" ");
+    const app=document.getElementById("app");
+    // build a normal page, then quantum-randomize EVERY style decision
+    MX.fakeArticle(app,{accent:"#888",title:"This Page Looks Different For Everyone, Forever",
+      brand:"⚛ QUANTUM CSS",blocks:8,
+      lede:"There is no canonical version of this website. Its appearance is collapsed from randomness the instant you load it."});
+    const fonts=["Georgia,serif","'Segoe UI',sans-serif","'Courier New',monospace","'Comic Sans MS',cursive","Impact,sans-serif","Verdana,sans-serif","'Times New Roman',serif"];
+    const hue=Math.floor(rnd(B,0)*360);
+    const bg=`hsl(${hue},${20+rnd(B,1)*50|0}%,${85+rnd(B,2)*12|0}%)`;
+    const ink=`hsl(${(hue+180)%360},${40+rnd(B,3)*40|0}%,${10+rnd(B,4)*20|0}%)`;
+    const acc=`hsl(${(hue+ (rnd(B,5)*120|0))%360},80%,50%)`;
+    document.body.style.background=bg;document.body.style.color=ink;
+    const all=[...app.querySelectorAll("*")];
+    all.forEach((el,i)=>{
+      el.style.fontFamily=fonts[(rnd(B,i+10)*fonts.length)|0];
+      el.style.textAlign=["left","center","right","justify"][(rnd(B,i+20)*4)|0];
+      el.style.letterSpacing=((rnd(B,i+30)-0.5)*4).toFixed(1)+"px";
+      if(el.matches("h1,h2"))el.style.color=acc;
+      el.style.fontSize=(0.8+rnd(B,i+40)*1.4).toFixed(2)+"em";
+      if(rnd(B,i+50)<0.3)el.style.transform=`rotate(${(rnd(B,i+55)-0.5)*6}deg)`;
+      if(rnd(B,i+60)<0.4)el.style.borderRadius=(rnd(B,i+61)*30|0)+"px";
+      if(el.matches(".card,blockquote,.btn"))el.style.background=`hsl(${rnd(B,i+70)*360|0},70%,${70+rnd(B,i+71)*20|0}%)`;
+      el.style.padding=(rnd(B,i+80)*18|0)+"px "+(rnd(B,i+81)*22|0)+"px";
+    });
+    document.querySelector("nav.site")?.style.setProperty("flex-direction",rnd(B,5)<.5?"row":"column");
+  })();
+  </script>
+</body></html>

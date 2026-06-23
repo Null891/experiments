@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Dream Interpreter DOM</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;font-family:"Segoe UI",sans-serif;color:#fff}
+  #gl{position:fixed;inset:0;z-index:0}
+  #panel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:min(560px,92vw);
+    background:rgba(8,6,18,.6);backdrop-filter:blur(8px);padding:26px;border-radius:18px;text-align:center;border:1px solid rgba(255,255,255,.15)}
+  textarea{width:100%;height:90px;border-radius:10px;border:1px solid #534;background:rgba(0,0,0,.4);color:#fff;padding:12px;font-size:15px;resize:none}
+  button{margin-top:12px;background:#c5a3ff;border:0;color:#1a0f2e;padding:12px 24px;border-radius:10px;font-weight:800;cursor:pointer;font-size:15px}
+  #interp{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2;max-width:720px;text-align:center;
+    background:rgba(8,6,18,.55);padding:14px 20px;border-radius:14px;font-size:15px;line-height:1.5;display:none}
+  h2{margin:0 0 6px;font-weight:300;letter-spacing:1px}
+</style></head>
+<body>
+  <canvas id="gl"></canvas>
+  <div id="panel">
+    <h2>🌙 Tell me a dream</h2>
+    <p style="opacity:.8;margin:.4em 0 1em">I'll paint it as a surrealist sky and read it back to you. Once painted, the background is yours forever (well, until reload).</p>
+    <textarea id="dream" placeholder="I was falling through a house made of teeth and my grandmother was a radio…"></textarea>
+    <button id="go">Interpret &amp; Paint</button>
+  </div>
+  <div id="interp"></div>
+  <script>
+  // WebGL surreal shader, seeded by dream text hash
+  const cv=document.getElementById("gl"),gl=cv.getContext("webgl");
+  function rs(){cv.width=innerWidth;cv.height=innerHeight;gl&&gl.viewport(0,0,cv.width,cv.height);}rs();addEventListener("resize",rs);
+  let prog,uS={};
+  if(gl){
+    const v=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+    const f=`precision highp float;uniform vec2 R;uniform float T;uniform vec3 SEED;
+      mat2 rot(float a){return mat2(cos(a),-sin(a),sin(a),cos(a));}
+      float hash(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*43758.5);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+      float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<6;i++){s+=a*noise(p);p*=2.0;p*=rot(.5);a*=.5;}return s;}
+      void main(){
+        vec2 uv=(gl_FragCoord.xy-0.5*R)/R.y;
+        float t=T*0.2;
+        // domain warp
+        vec2 q=vec2(fbm(uv*2.+SEED.xy+t),fbm(uv*2.-SEED.yz-t));
+        vec2 r=vec2(fbm(uv*3.+q*2.+t*1.3),fbm(uv*3.+q*2.-t));
+        float n=fbm(uv*2.+r*3.);
+        vec3 a=vec3(0.5+0.5*sin(SEED.x*6.+n*5.),0.4+0.4*cos(SEED.y*6.+r.x*4.),0.6+0.4*sin(SEED.z*6.+q.y*3.));
+        vec3 b=vec3(0.1,0.0,0.2);
+        vec3 col=mix(b,a,smoothstep(0.2,0.9,n));
+        // floating "eyes/orbs"
+        for(int i=0;i<4;i++){vec2 c=vec2(sin(float(i)*2.+SEED.x*9.+t),cos(float(i)*1.7+SEED.y*7.-t))*0.6;
+          float d=length(uv-c);col+=vec3(1.,.9,.7)*smoothstep(0.06,0.0,abs(d-0.04))*0.7*(0.5+0.5*sin(t*3.+float(i)));}
+        col=pow(col,vec3(0.85));
+        gl_FragColor=vec4(col,1.);
+      }`;
+    function mk(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;}
+    prog=gl.createProgram();gl.attachShader(prog,mk(gl.VERTEX_SHADER,v));gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,f));gl.linkProgram(prog);gl.useProgram(prog);
+    const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    const lp=gl.getAttribLocation(prog,"p");gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+    uS.R=gl.getUniformLocation(prog,"R");uS.T=gl.getUniformLocation(prog,"T");uS.SEED=gl.getUniformLocation(prog,"SEED");
+  }
+  let seed=[0.3,0.6,0.9];
+  function frame(t){if(gl&&prog){gl.uniform2f(uS.R,cv.width,cv.height);gl.uniform1f(uS.T,t*0.001);gl.uniform3f(uS.SEED,seed[0],seed[1],seed[2]);gl.drawArrays(gl.TRIANGLES,0,3);}requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
+
+  const SYM={tooth:"loss of control",fall:"a fear you're not naming",water:"the unconscious, vast and patient",
+    house:"the self and its many locked rooms",radio:"a message from someone you stopped listening to",
+    teeth:"anxiety about how others see you",fly:"a wish to escape something mundane",chase:"avoidance",
+    grandmother:"inherited memory",dark:"the unknown you keep circling",door:"a threshold you're afraid to cross",
+    mirror:"self-confrontation",ocean:"emotion you can't measure",fire:"transformation, possibly unwanted"};
+  function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0);}
+  document.getElementById("go").onclick=()=>{
+    const txt=document.getElementById("dream").value||"a dream of nothing";
+    const h=hashStr(txt);seed=[((h&255)/255),(((h>>8)&255)/255),(((h>>16)&255)/255)];
+    document.getElementById("panel").style.display="none";
+    // interpret
+    let found=[];for(const k in SYM)if(txt.toLowerCase().includes(k))found.push("<b>"+k+"</b> — "+SYM[k]);
+    if(!found.length)found.push("The absence of familiar symbols suggests a dream the waking mind has already begun to erase.");
+    document.getElementById("interp").style.display="block";
+    document.getElementById("interp").innerHTML="🔮 <b>Interpretation:</b> "+found.join(" &nbsp;·&nbsp; ")+
+      "<br><span style='opacity:.7;font-size:13px'>This sky was painted from your words and cannot be changed.</span>";
+  };
+  </script>
+</body></html>

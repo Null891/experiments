@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Time-Travel History</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden}
+  #page{position:absolute;inset:0;overflow:auto}
+  #vhs{position:fixed;inset:0;z-index:8;pointer-events:none;opacity:0;background:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 2px,transparent 2px 4px);mix-blend-mode:overlay}
+  #vhs.flash{animation:vh .5s}@keyframes vh{0%{opacity:1}100%{opacity:0}}
+  #tl{position:fixed;left:0;right:0;bottom:0;z-index:10;background:rgba(8,10,16,.92);padding:14px 24px;
+    font-family:"Segoe UI",sans-serif;color:#bcd}
+  #tl input{width:100%}
+  #yr{font-size:30px;font-weight:800;color:#9fd6ff}
+  .ticks{display:flex;justify-content:space-between;font-size:11px;color:#789;margin-top:2px}
+  .hint{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:10;font-size:13px;background:rgba(10,12,20,.7);color:#fff;padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <div id="page"></div>
+  <div id="vhs"></div>
+  <div class="hint">Drag the <b>timeline</b> to morph this site backward and forward through decades of web design</div>
+  <div id="tl">
+    <span id="yr">2024</span> &nbsp;<span id="era" style="opacity:.7"></span>
+    <input id="slider" type="range" min="1993" max="2024" value="2024">
+    <div class="ticks"><span>1993</span><span>1998</span><span>2004</span><span>2010</span><span>2016</span><span>2024</span></div>
+  </div>
+  <script src="_shared.js"></script>
+  <script>
+  const page=document.getElementById("page");
+  MX.fakeArticle(page,{title:"A Single Website, Seen Across Thirty Years",brand:"THE WAYBACK WING",blocks:7,
+    lede:"This is the same content, the same words — but its skin changes with the year. Scrub the timeline and watch the web age in reverse."});
+  const S=document.createElement("style");document.head.appendChild(S);
+  function era(y){
+    let css="",name="";
+    if(y<1996){name="NCSA Mosaic era";css=`body{background:#c0c0c0;font-family:'Times New Roman',serif}.wrap{max-width:none;padding:10px}h1.title{font-size:30px;text-align:center;border-bottom:3px double #000}nav.site{background:#008;color:#ff0;border:0}nav.site a{color:#ff0;text-decoration:underline}.btn{background:#c0c0c0;border:2px outset #fff;color:#000;border-radius:0}a{color:#00f}blockquote,.card{border:2px inset gray;border-radius:0;background:#fff}`;}
+    else if(y<2002){name="GeoCities / Flash era";css=`body{background:#000;color:#0f0;font-family:Verdana}.wrap{background:#000;border:4px ridge #f0f}h1.title{color:#ff0;font-family:Impact;text-shadow:2px 2px #f0f;text-align:center}nav.site{border-bottom:3px dashed #0ff}nav.site a{color:#0ff}.btn{background:#f0f;border:3px outset #fff;color:#000;border-radius:0}a{color:#ff0}p,blockquote{color:#0f0}blockquote,.card{background:#001;border:2px solid #0ff;color:#0f0;border-radius:0}`;}
+    else if(y<2008){name="Web 2.0 glossy era";css=`body{background:linear-gradient(#eef6ff,#cfe2ff);font-family:'Lucida Grande',sans-serif}.wrap{background:#fff;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin:14px auto}h1.title{color:#2a6fb0;font-size:42px}nav.site{background:linear-gradient(#5a9fd4,#357abf);border-radius:10px;padding:10px;border:0}nav.site a{color:#fff}.btn{background:linear-gradient(#7bbf4a,#5a9e2f);border-radius:18px}`;}
+    else if(y<2014){name="Skeuomorphic era";css=`body{background:#3b3b3b;font-family:'Helvetica Neue',sans-serif}.wrap{background:#ece8df;border-radius:8px;box-shadow:inset 0 1px 0 #fff,0 8px 24px rgba(0,0,0,.5);margin:14px auto}nav.site{background:linear-gradient(#6b6b6b,#4a4a4a);border-radius:6px;padding:10px}nav.site a{color:#fff;text-shadow:0 -1px 0 #000}.btn{background:linear-gradient(#fff,#ccc);color:#333;border:1px solid #999;border-radius:6px}`;}
+    else if(y<2019){name="Flat design era";css=`body{background:#ecf0f1;font-family:Arial}h1.title{color:#2c3e50;font-weight:300;font-size:46px}nav.site{background:#1abc9c;border:0;padding:14px}nav.site a{color:#fff;font-weight:300}.btn{background:#3498db;border-radius:3px}.card,blockquote{border:0;background:#f7f9fa;border-radius:3px}`;}
+    else{name="Modern minimal era";css=`body{background:#fff;font-family:'Segoe UI',system-ui,sans-serif}h1.title{font-weight:800;font-size:54px;letter-spacing:-1px}nav.site{border:0;border-bottom:1px solid #eee}.btn{background:#111;border-radius:10px}.card{border:1px solid #eee;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.05)}`;}
+    S.textContent=css;document.getElementById("era").textContent="· "+name;
+  }
+  era(2024);
+  let lastBand=5;
+  document.getElementById("slider").addEventListener("input",e=>{
+    const y=+e.target.value;document.getElementById("yr").textContent=y;era(y);
+    const band=y<1996?0:y<2002?1:y<2008?2:y<2014?3:y<2019?4:5;
+    if(band!==lastBand){lastBand=band;const v=document.getElementById("vhs");v.classList.remove("flash");void v.offsetWidth;v.classList.add("flash");}
+  });
+  </script>
+</body></html>

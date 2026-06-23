@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Traceroute Highway</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0612;color:#cfe;font-family:"Segoe UI",sans-serif}
+  #c{position:fixed;inset:0;display:block}
+  #hud{position:fixed;left:14px;top:12px;z-index:3;background:rgba(10,8,20,.6);padding:9px 13px;border-radius:8px;font-size:13px;line-height:1.6}
+  #hud b{color:#ffd23f}
+  .hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;font-size:13px;background:rgba(10,8,20,.7);padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+  #hop{position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:3;font-weight:800;font-size:18px;color:#7af0ff;text-shadow:0 2px 8px #000}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="hud">🛣 TRACEROUTE HIGHWAY<br>hop <b id="h">0</b>/<b id="ht">0</b> · speed <b id="sp">0</b><br>ping <b id="ping">0</b>ms</div>
+  <div id="hop"></div>
+  <div class="hint">Steer with <b>←</b> <b>→</b> (or mouse). The track is built from the real server hops to this site. Don't hit the walls.</div>
+  <script>
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
+  // build a traceroute: random hops with curvature + city labels
+  const CITIES=["your router","ISP gateway","London-IX","AMS-IX Amsterdam","Frankfurt DE-CIX","NYC Equinix","Ashburn VA","Dallas TX","LA1 Coresite","Tokyo NTT","Singapore","Sydney","São Paulo","the server"];
+  const HOPS=[];let curve=0;
+  for(let i=0;i<160;i++){if(i%12===0)curve=(Math.random()-0.5)*0.9;HOPS.push({curve:curve+Math.sin(i*0.2)*0.2,city:i%12===0?CITIES[(i/12)%CITIES.length]:null,ping:20+Math.random()*180});}
+  document.getElementById("ht").textContent=Math.floor(HOPS.length/12);
+  let pos=0,playerX=0,vx=0,speed=0,crashed=false,hopIdx=0;
+  const keys={};addEventListener("keydown",e=>{keys[e.key]=true;});addEventListener("keyup",e=>{keys[e.key]=false;});
+  let mouseX=null;addEventListener("mousemove",e=>{mouseX=(e.clientX/W)*2-1;});
+  function seg(i){return HOPS[Math.max(0,Math.min(HOPS.length-1,i|0))];}
+  function frame(){
+    requestAnimationFrame(frame);
+    if(!crashed){speed=Math.min(1.0,speed+0.004);}else speed*=0.92;
+    pos+=speed*0.35;
+    if(keys["ArrowLeft"])vx-=0.04;if(keys["ArrowRight"])vx+=0.04;
+    if(mouseX!==null)vx+=(mouseX-playerX)*0.02;
+    vx*=0.9;playerX+=vx;
+    // road curvature pushes you
+    const curveHere=seg(pos).curve;playerX+=curveHere*0.02*speed;
+    // draw sky
+    const sky=x.createLinearGradient(0,0,0,H*0.55);sky.addColorStop(0,"#1a0a2a");sky.addColorStop(1,"#3a1a4a");
+    x.fillStyle=sky;x.fillRect(0,0,W,H*0.55);
+    // stars
+    x.fillStyle="rgba(200,180,255,.5)";for(let i=0;i<40;i++)x.fillRect((i*97)%W,(i*53)%(H*0.5),2,2);
+    x.fillStyle="#0a0612";x.fillRect(0,H*0.55,W,H*0.45);
+    // pseudo-3D road
+    const horizon=H*0.55;
+    let cx=W/2 - playerX*W*0.3;
+    let accCurve=0;
+    for(let i=0;i<120;i++){
+      const z=i/120;const sc=1-z;const y=horizon+(H-horizon)*(1-Math.pow(z,1.4));
+      const s=seg(pos+i*0.4);accCurve+=s.curve;
+      const roadW=(W*0.9)*(1-z*0.86);
+      const center=cx + accCurve*sc*sc*40;
+      const col=(Math.floor(pos+i)%2)?"#2a2440":"#241f38";
+      x.fillStyle=col;x.fillRect(center-roadW/2,y,roadW,Math.max(2,(H-horizon)/120*2.4));
+      // edges
+      x.fillStyle=(Math.floor(pos*2+i)%2)?"#ff3b6b":"#fff";
+      x.fillRect(center-roadW/2-6*sc,y,6*sc,3);x.fillRect(center+roadW/2,y,6*sc,3);
+      // hop gate
+      const gi=Math.floor(pos+i*0.4);if(HOPS[gi]&&HOPS[gi].city&&i>3&&i<110&&(Math.floor(pos+i*0.4)!==Math.floor(pos+(i-1)*0.4))){
+        x.fillStyle="rgba(120,240,255,.25)";x.fillRect(center-roadW/2,y-30*sc,roadW,30*sc);
+        if(z<0.5){x.fillStyle="#7af0ff";x.font=`bold ${14*sc+6}px Segoe UI`;x.textAlign="center";x.fillText("◈ "+HOPS[gi].city,center,y-6);}
+      }
+    }
+    // player ship
+    const py=H-70,pxs=W/2;
+    if(Math.abs(playerX)>1.0&&!crashed){crashed=true;document.getElementById("hop").textContent="💥 packet dropped! routing again…";
+      setTimeout(()=>{crashed=false;playerX=0;vx=0;document.getElementById("hop").textContent="";},1200);}
+    x.save();x.translate(pxs,py);x.rotate(vx*0.6);
+    x.fillStyle=crashed?"#ff3b3b":"#7af0ff";x.beginPath();x.moveTo(0,-16);x.lineTo(14,14);x.lineTo(0,7);x.lineTo(-14,14);x.closePath();x.fill();x.restore();
+    // hud
+    hopIdx=Math.floor(pos/12);document.getElementById("h").textContent=Math.min(hopIdx,Math.floor(HOPS.length/12));
+    document.getElementById("sp").textContent=Math.round(speed*420);
+    document.getElementById("ping").textContent=Math.round(seg(pos).ping);
+    if(pos>=HOPS.length-2){document.getElementById("hop").textContent="🏁 Reached the server! Image delivered.";}
+  }
+  frame();
+  </script>
+</body></html>

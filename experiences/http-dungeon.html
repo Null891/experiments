@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The HTTP Status Code Dungeon</title>
+<style>
+  html,body{margin:0;height:100%;background:#0d0f16;color:#cfe;font-family:"Consolas",monospace;overflow:hidden}
+  #wrap{max-width:680px;margin:0 auto;height:100%;display:flex;flex-direction:column}
+  #url{display:flex;gap:0;margin:16px 10px 0;border:1px solid #2a3550;border-radius:8px;overflow:hidden}
+  #url .pre{background:#161b2a;padding:11px;color:#789;white-space:nowrap}
+  #url input{flex:1;background:#0f1420;border:0;color:#fff;padding:11px;font-family:inherit;font-size:14px}
+  #url button{background:#2a6cff;border:0;color:#fff;padding:0 18px;font-weight:700;cursor:pointer}
+  #room{flex:1;overflow:auto;padding:18px;margin:10px;border:1px solid #1b2333;border-radius:10px;line-height:1.6}
+  .code{font-size:54px;font-weight:800}
+  #stats{display:flex;gap:18px;padding:0 16px 12px;color:#9ab}
+  #stats b{color:#ffd23f}
+  .hint{padding:0 16px 14px;color:#678;font-size:12px}
+  .x200{color:#3dff7a}.x4{color:#ff7a7a}.x5{color:#ff4444}.x3{color:#9b8cff}.x1{color:#5ad1ff}
+</style></head>
+<body>
+  <div id="wrap">
+    <div id="url"><span class="pre">GET dungeon://keep/?status=</span><input id="in" value="200"><button id="goto">Travel</button></div>
+    <div id="stats">❤ HP <b id="hp">100</b> · 🗝 keys <b id="keys">0</b> · depth <b id="depth">0</b></div>
+    <div id="room"></div>
+    <div class="hint">Change the <b>?status=</b> code to move between rooms. Try: 200, 301, 403, 404, 418, 500, 451, 429, 204, 666</div>
+  </div>
+  <script>
+  let hp=100,keys=0,depth=0;
+  const room=document.getElementById("room");
+  function set(){document.getElementById("hp").textContent=hp;document.getElementById("keys").textContent=keys;document.getElementById("depth").textContent=depth;}
+  const CODES={
+    200:{c:"x200",t:"OK — The Safe Room",d:"A calm, well-lit chamber. Nothing attacks you. You catch your breath. The walls hum with valid headers. <br><br>Doors lead onward: try <b>301</b>, <b>403</b>, or the cursed <b>500</b>."},
+    301:{c:"x3",t:"Moved Permanently",d:"The floor slides. You are redirected, willing or not. You descend one level deeper.",fx:()=>{depth++;hp-=5;}},
+    302:{c:"x3",t:"Found (Temporarily)",d:"A shortcut! You're whisked sideways. No harm done. This time.",fx:()=>{depth++;}},
+    403:{c:"x4",t:"Forbidden — The Locked Door",d:"A great door bars the way. Without a key it will not yield. (Find keys at <b>418</b>.)",fx:()=>{if(keys>0){keys--;room.querySelector('.d').innerHTML+="<br><br>🗝 You spend a key. The door grinds open. <b>200</b> lies beyond.";}}},
+    404:{c:"x4",t:"Not Found — The Void",d:"There is no room here. There never was. You float in nothing and lose your bearings.",fx:()=>{hp-=10;}},
+    418:{c:"x1",t:"I'm a Teapot — The Healing Spring",d:"A small porcelain teapot, impossibly, brews. You drink. Warmth returns. <b>+25 HP</b> and a 🗝 key appears.",fx:()=>{hp=Math.min(100,hp+25);keys++;}},
+    500:{c:"x5",t:"Internal Server Error — The Beast",d:"Something deep in the backend stirs and lashes out. A stack-trace dragon! It claws you for <b>20 HP</b>. Flee to <b>200</b>.",fx:()=>{hp-=20;}},
+    503:{c:"x5",t:"Service Unavailable",d:"The room is 'down for maintenance'. A bored sign-spirit blocks you. Wait, or leave via <b>200</b>.",fx:()=>{hp-=5;}},
+    429:{c:"x4",t:"Too Many Requests",d:"You've been moving too fast. The dungeon throttles you. Everything slows. -8 HP from the strain.",fx:()=>{hp-=8;}},
+    451:{c:"x4",t:"Unavailable For Legal Reasons",d:"A lawyer-lich demands you sign a 10,000-line EULA. You sign in blood. -12 HP.",fx:()=>{hp-=12;}},
+    204:{c:"x200",t:"No Content — The Empty Hall",d:"A vast hall with absolutely nothing in it. Peaceful. Pointless. You rest. +5 HP.",fx:()=>{hp=Math.min(100,hp+5);}},
+    666:{c:"x5",t:"⛧ Undefined Behavior ⛧",d:"This code does not exist in any RFC. The dungeon shudders at your audacity. Reality glitches. -1 HP and +1 🗝 (it pities you).",fx:()=>{hp-=1;keys++;}}
+  };
+  function travel(code){
+    const r=CODES[code]||{c:"x4",t:code+" — Unknown",d:"The dungeon does not recognize this status. The walls shrug. -3 HP for wasting everyone's time.",fx:()=>{hp-=3;}};
+    if(r.fx)r.fx();hp=Math.max(0,hp);set();
+    room.innerHTML=`<div class="code ${r.c}">${code}</div><h2 class="${r.c}">${r.t}</h2><div class="d">${r.d}</div>`;
+    if(hp<=0)room.innerHTML+="<br><h2 style='color:#ff4444'>💀 You died (Connection reset). Refresh to respawn.</h2>";
+    if(code===200&&depth>=3)room.innerHTML+="<br><b style='color:#3dff7a'>🏆 You reached the Safe Room from the depths. You win the dungeon.</b>";
+  }
+  document.getElementById("goto").onclick=()=>travel(parseInt(document.getElementById("in").value)||0);
+  document.getElementById("in").addEventListener("keydown",e=>{if(e.key==="Enter")travel(parseInt(e.target.value)||0);});
+  set();travel(200);
+  </script>
+</body></html>

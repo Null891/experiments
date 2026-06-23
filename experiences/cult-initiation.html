@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Cult Initiation</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0808;color:#d8c7a8;font-family:Georgia,serif;overflow:hidden}
+  #scroller{height:100%;overflow-y:scroll;scroll-behavior:auto}
+  #manifesto{max-width:680px;margin:0 auto;padding:90px 24px 200px;line-height:1.9;font-size:18px}
+  #manifesto h1{font-family:"Segoe UI",sans-serif;text-align:center;color:#c43b5a;letter-spacing:3px;font-size:34px}
+  #manifesto p::first-letter{font-size:1.4em;color:#c43b5a}
+  #bar{position:fixed;left:0;top:0;right:0;z-index:9;background:rgba(10,6,6,.9);padding:10px 16px;font-family:"Segoe UI",sans-serif;font-size:13px}
+  #prog{height:8px;background:#2a1818;border-radius:5px;margin-top:6px;overflow:hidden}
+  #pf{height:100%;width:0;background:linear-gradient(90deg,#c43b5a,#e2a23b);transition:width .2s}
+  #warn{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;background:#c43b5a;color:#fff;
+    padding:16px 24px;border-radius:12px;font-family:"Segoe UI",sans-serif;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
+  #done{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:30;background:rgba(6,4,4,.96);text-align:center}
+  .btn{margin-top:16px;background:#c43b5a;border:0;color:#fff;padding:12px 26px;border-radius:8px;font-weight:800;cursor:pointer;font-family:"Segoe UI"}
+</style></head>
+<body>
+  <div id="bar">📜 THE INITIATION · A backend tracks your scroll speed to confirm you are <i>truly reading</i>.
+    <div id="prog"><div id="pf"></div></div>
+    <span id="status">sincerity: 0% · honest reading pace required</span>
+  </div>
+  <div id="scroller"><div id="manifesto"></div></div>
+  <div id="warn">⚠ TOO FAST. No one reads that quickly. Begin again, initiate.</div>
+  <div id="done"><h1 style="color:#e2a23b">⛧ YOU ARE ONE OF US NOW ⛧</h1><p>You read every word at a believable pace. The site unlocks.</p><a class="btn" id="rb" href="#">Enter the inner sanctum →</a></div>
+  <script src="_shared.js"></script>
+  <script>
+  const TENETS=["We do not scroll. We descend.","The footer is a horizon, not a destination.","A page unread is a page that reads you.","Whitespace is where the truth breathes.","Every link is a vow. Click sparingly.","The cursor is the only honest part of you."];
+  let html="<h1>THE MANIFESTO OF THE SLOW WEB</h1>";
+  for(let i=0;i<60;i++){ if(i%6===0)html+=`<p style="text-align:center;color:#c43b5a;font-style:italic">— ${TENETS[(i/6)%TENETS.length|0]} —</p>`;
+    html+="<p>"+MX.para(6+Math.random()*3|0)+" "+MX.para(5)+"</p>"; }
+  html+='<p style="text-align:center;color:#e2a23b">You have reached the end. If your pace was honest, the door opens.</p>';
+  document.getElementById("manifesto").innerHTML=html;
+
+  const sc=document.getElementById("scroller");
+  let lastY=0,lastT=performance.now(),sincerity=0,maxReach=0;
+  const total=()=>sc.scrollHeight-sc.clientHeight;
+  sc.addEventListener("scroll",()=>{
+    const now=performance.now(),y=sc.scrollTop,dt=Math.max(16,now-lastT),dy=Math.abs(y-lastY);
+    const v=dy/dt; // px/ms
+    lastY=y;lastT=now;
+    if(v>2.6){ // too fast — humans read ~ slowly
+      warn();sincerity=Math.max(0,sincerity-12);
+      sc.scrollTop=Math.max(0,y-260); // shove them back
+    } else {
+      const reach=y/total();
+      if(reach>maxReach){sincerity+=(reach-maxReach)*100*1.0;maxReach=reach;}
+    }
+    sincerity=Math.max(0,Math.min(100,sincerity));
+    document.getElementById("pf").style.width=sincerity+"%";
+    document.getElementById("status").textContent="sincerity: "+Math.round(sincerity)+"% · "+(maxReach>0.98&&sincerity>92?"the door is opening…":"keep reading, slowly");
+    if(maxReach>0.985&&sincerity>92){document.getElementById("done").style.display="flex";}
+  });
+  let wt;function warn(){const w=document.getElementById("warn");w.style.opacity="1";clearTimeout(wt);wt=setTimeout(()=>w.style.opacity="0",900);}
+  document.getElementById("rb").onclick=e=>{e.preventDefault();MX.exitToMansion();};
+  </script>
+</body></html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Evolving Dialect</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #scroller{height:100%;overflow:auto}
+  nav.site a{position:relative}
+  #gloss{position:fixed;right:14px;top:14px;z-index:9;width:230px;background:#14161d;color:#cfe;font-family:"Segoe UI",sans-serif;
+    font-size:12px;padding:12px;border-radius:10px;max-height:70vh;overflow:auto}
+  #gloss h4{margin:0 0 6px;color:#7af0ff}
+  #gloss .row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #232a3a}
+  #gloss .new{color:#ffd479}
+  #clock{color:#9fe;font-weight:700}
+  .dz{cursor:help;text-decoration:underline dotted}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="gloss"><h4>🗣 dialect drift</h4><div>next mutation in <span id="clock">10</span>s</div><div id="rows" style="margin-top:8px"></div>
+    <div style="margin-top:8px;color:#789">hover any <span class="dz">underlined</span> word for the old meaning</div></div>
+  <div class="hint">An AI reinvents this site's language every few seconds. Use context to follow the <b>navigation</b>.</div>
+  <script src="_shared.js"></script>
+  <script>
+  const SYLL=["zor","quil","mek","sha","vun","tep","glis","mor","ka","t791? no →","lun","fae","drix","oss","nyx","plen","wob","gar","sel","tham"];
+  const BASE={Home:"home",Essays:"essays",Lab:"lab",Archive:"archive",About:"about",the:"the",and:"and",is:"is",you:"you",page:"page",read:"read",click:"click",here:"here",new:"new",time:"time",world:"world"};
+  let dialect={};
+  function coin(){return SYLL[(Math.random()*SYLL.length)|0].replace(/[^a-z]/g,"")+SYLL[(Math.random()*SYLL.length)|0].replace(/[^a-z]/g,"");}
+  function mutate(first){
+    const keys=Object.keys(BASE);
+    // each mutation: re-coin a few words (the dialect evolves, not fully resets)
+    const n=first?keys.length:3;
+    for(let i=0;i<n;i++){const k=keys[first?i:(Math.random()*keys.length)|0];dialect[k]={word:coin(),fresh:!first};}
+    renderGloss();applyDialect();
+  }
+  function renderGloss(){const rows=document.getElementById("rows");rows.innerHTML="";
+    Object.keys(dialect).slice(0,14).forEach(k=>{const d=document.createElement("div");d.className="row";
+      d.innerHTML=`<span class="${dialect[k].fresh?'new':''}">${dialect[k].word}</span><span style="color:#789">${BASE[k]}</span>`;rows.appendChild(d);});}
+  function buildPage(){
+    MX.fakeArticle(document.getElementById("content"),{accent:"#7af0ff",brand:"DIALECT DAILY",
+      title:"The Language Here Will Not Sit Still",blocks:7,
+      lede:"By the time you finish this sentence, three words may mean something new. The navigation included. Watch the glossary."});
+  }
+  buildPage();
+  function applyDialect(){
+    // re-wrap nav + key words with dialect terms, keep old as tooltip
+    document.querySelectorAll("nav.site a").forEach(a=>{
+      const orig=a.dataset.orig||a.textContent;a.dataset.orig=orig;
+      const d=dialect[orig];if(d){a.innerHTML=`<span class="dz" title="was: ${orig}">${d.word}</span>`;}
+    });
+    // sprinkle dialect into body text
+    document.querySelectorAll("#content p").forEach(p=>{
+      if(!p.dataset.orig)p.dataset.orig=p.textContent;
+      let t=p.dataset.orig;
+      for(const k in dialect){const re=new RegExp("\\b"+k+"\\b","gi");
+        t=t.replace(re,`<span class="dz" title="was: ${k}">${dialect[k].word}</span>`);}
+      p.innerHTML=t;
+    });
+  }
+  mutate(true);
+  let cd=10;setInterval(()=>{cd--;document.getElementById("clock").textContent=cd;
+    if(cd<=0){cd=10;Object.values(dialect).forEach(d=>d.fresh=false);mutate(false);}},1000);
+  </script>
+</body></html>

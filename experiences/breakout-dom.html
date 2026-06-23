@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Breakout DOM</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#0b0e16}
+  #content{padding-top:30px;transition:none}
+  #content p,#content h1,#content h2,#content .card,#content blockquote,#content .btn{
+    transition:opacity .15s,transform .15s;border-radius:8px}
+  .brick-hit{opacity:0!important;transform:scale(.6)!important}
+  #c{position:fixed;inset:0;z-index:5;pointer-events:none}
+  #hud{position:fixed;right:16px;top:14px;z-index:6;font-family:"Segoe UI",sans-serif;font-weight:700;color:#7af0ff;text-shadow:0 1px 3px #000}
+</style></head>
+<body>
+  <div class="wrap" id="content"></div>
+  <canvas id="c"></canvas>
+  <div id="hud">🧱 Blocks left: <span id="n">0</span></div>
+  <div class="hint">Move the <b>paddle</b> with your mouse. The bricks are this site's real content. Smash it all.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#7af0ff",brand:"THE DEMOLITION DAILY",
+    title:"Knock Down Everything We Spent So Long Building",blocks:14,
+    lede:"Each block of this article is a brick. Bounce the ball into the paragraphs and headings until nothing remains."});
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H,bricks=[];function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;refresh();}rs();addEventListener("resize",rs);
+  function refresh(){bricks=[...document.querySelectorAll("#content p,#content h1,#content h2,#content .card,#content blockquote,#content .btn,nav.site")]
+    .filter(e=>!e.classList.contains("brick-hit")&&e.offsetParent!==null)
+    .map(e=>({e,r:e.getBoundingClientRect()}));document.getElementById("n").textContent=bricks.length;}
+  let ball={x:innerWidth/2,y:innerHeight-80,vx:4,vy:-5,r:8};
+  let paddle={x:innerWidth/2,w:130,h:14,y:innerHeight-30};
+  addEventListener("mousemove",e=>{paddle.x=e.clientX;});
+  let parts=[];
+  function smash(b){b.e.classList.add("brick-hit");for(let i=0;i<10;i++){const a=Math.random()*7;parts.push({x:ball.x,y:ball.y,vx:Math.cos(a)*4,vy:Math.sin(a)*4,life:1,c:getComputedStyle(b.e).color});}setTimeout(refresh,60);}
+  function frame(){
+    requestAnimationFrame(frame);
+    x.clearRect(0,0,W,H);
+    ball.x+=ball.vx;ball.y+=ball.vy;
+    if(ball.x<ball.r||ball.x>W-ball.r)ball.vx*=-1;
+    if(ball.y<ball.r)ball.vy*=-1;
+    if(ball.y>H+40){ball.x=W/2;ball.y=H-80;ball.vx=4*(Math.random()<.5?1:-1);ball.vy=-5;}
+    // paddle
+    if(ball.y>paddle.y-ball.r&&ball.y<paddle.y+paddle.h&&Math.abs(ball.x-paddle.x)<paddle.w/2&&ball.vy>0){
+      ball.vy=-Math.abs(ball.vy);ball.vx+=(ball.x-paddle.x)/paddle.w*6;}
+    // bricks
+    for(const b of bricks){const r=b.r;
+      if(ball.x>r.left&&ball.x<r.right&&ball.y>r.top&&ball.y<r.bottom){
+        // reflect based on shallow axis
+        const ox=Math.min(ball.x-r.left,r.right-ball.x),oy=Math.min(ball.y-r.top,r.bottom-ball.y);
+        if(ox<oy)ball.vx*=-1;else ball.vy*=-1;smash(b);break;}}
+    // draw
+    x.fillStyle="#7af0ff";x.beginPath();x.arc(ball.x,ball.y,ball.r,0,7);x.fill();
+    x.fillStyle="#fff";x.fillRect(paddle.x-paddle.w/2,paddle.y,paddle.w,paddle.h);
+    parts=parts.filter(p=>p.life>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life-=0.03;x.globalAlpha=p.life;x.fillStyle=p.c;x.fillRect(p.x,p.y,4,4);});x.globalAlpha=1;
+    if(bricks.length===0){x.fillStyle="#fff";x.font="bold 34px Segoe UI";x.textAlign="center";x.fillText("DEMOLISHED. Nothing left to read.",W/2,H/2);}
+  }
+  frame();
+  </script>
+</body></html>

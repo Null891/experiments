@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Breathing Site</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#0e1a17}
+  #scroller{height:100%;overflow:auto}
+  .wrap{transition:none}
+  #content p,#content h1,#content h2,#content .card,#content blockquote,#content .btn,nav.site{
+    will-change:padding,margin,transform;border-radius:14px}
+  #content .card,#content blockquote{background:#fff}
+  #lungviz{position:fixed;right:16px;bottom:16px;z-index:9;font-family:"Segoe UI",sans-serif;color:#6fd3b0;font-weight:700}
+  #bpm{font-size:13px}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="lungviz">🫁 <span id="bpm">12 bpm</span> · the page is breathing</div>
+  <div class="hint">Every margin and padding on this page inhales and exhales. Try to read while it breathes.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#1dd1a1",brand:"THE RESPIRATORY REVIEW",
+    title:"In, and Out, and In Again: Notes on a Living Layout",blocks:10,
+    lede:"This page is alive in the only way a webpage can be: its whitespace expands and contracts, in and out, forever."});
+  const els=[...document.querySelectorAll("#content p,#content h1,#content h2,#content .card,#content blockquote,#content .btn,nav.site")];
+  // give each element a slightly different phase + amplitude for an organic feel
+  els.forEach(e=>{e.dataset.ph=(Math.random()*6.28).toFixed(2);e.dataset.am=(0.6+Math.random()*0.8).toFixed(2);});
+  let bpm=12;
+  function frame(t){
+    const w=2*Math.PI*(bpm/60)/1000;        // breaths per ms
+    const g=Math.sin(t*w);                    // global breath -1..1
+    els.forEach(e=>{
+      const ph=+e.dataset.ph,am=+e.dataset.am;
+      const b=Math.sin(t*w+ph)*am;            // per-element
+      const pad=18+ (b*0.5+0.5)*40;
+      const mar=8 + ((g*0.5+0.5)*30);
+      e.style.padding=pad+"px "+(pad*1.3)+"px";
+      e.style.margin=mar+"px 0";
+      e.style.transform=`scale(${1+b*0.012})`;
+    });
+    // body color subtly shifts like skin
+    document.body.style.background=`hsl(${165+g*8},35%,${8+ (g*0.5+0.5)*4}%)`;
+    document.getElementById("bpm").textContent=Math.round(bpm)+" bpm";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  // breath quickens if you scroll (exertion)
+  let last=0;document.getElementById("scroller").addEventListener("scroll",e=>{const y=e.target.scrollTop;bpm=Math.min(34,bpm+Math.abs(y-last)*0.02);last=y;});
+  setInterval(()=>{bpm=Math.max(11,bpm-0.4);},300);
+  </script>
+</body></html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Endless Staircase</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0810;font-family:"Segoe UI",sans-serif;color:#d8d2e8}
+  #c{position:fixed;inset:0}
+  #hud{position:fixed;left:16px;top:14px;z-index:3;font-weight:700;background:rgba(10,8,16,.55);padding:8px 12px;border-radius:8px}
+  #foot{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:5;background:rgba(8,6,14,.92);text-align:center}
+  .hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;font-size:13px;background:rgba(10,8,16,.7);padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="hud">🪜 Step <span id="step">0</span> · descending to the footer…</div>
+  <div id="foot"><h1>You reached the footer.</h1><p id="fp">It took 1,000 steps. The footer says: "© nobody. there was never a bottom."</p></div>
+  <div class="hint"><b>Scroll down</b> to descend. The staircase recedes forever. Reach the footer if you can.</div>
+  <script>
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
+  let depth=0,vel=0;
+  addEventListener("wheel",e=>{vel+=e.deltaY*0.006;},{passive:true});
+  // touch
+  let ty=0;addEventListener("touchstart",e=>ty=e.touches[0].clientY);
+  addEventListener("touchmove",e=>{vel+=(ty-e.touches[0].clientY)*-0.02;ty=e.touches[0].clientY;e.preventDefault();},{passive:false});
+  const GOAL=1000;let done=false;
+  function frame(){
+    requestAnimationFrame(frame);
+    vel*=0.92;depth=Math.max(0,depth+vel);
+    document.getElementById("step").textContent=Math.floor(depth);
+    if(depth>=GOAL&&!done){done=true;document.getElementById("foot").style.display="flex";}
+    // draw pseudo-3D descending staircase (vanishing point upper-center)
+    x.fillStyle="#0a0810";x.fillRect(0,0,W,H);
+    const vpx=W/2,vpy=H*0.30;
+    const STEPS=26;const phase=depth%1;
+    for(let i=STEPS;i>=0;i--){
+      const t=(i - phase)/STEPS;             // 0 near top(far), 1 near bottom(close)
+      if(t<=0)continue;
+      const persp=Math.pow(t,2.0);
+      const y=vpy + (H-vpy)*persp;
+      const halfW=(W*0.62)*persp;
+      const stepH=Math.max(2,(H-vpy)*( Math.pow((i+1-phase)/STEPS,2)-Math.pow(t,2) ));
+      const shade=30+persp*60;
+      const hue=270 - i*3;
+      // tread (top face)
+      x.fillStyle=`hsl(${hue},30%,${shade}%)`;
+      x.beginPath();x.moveTo(vpx-halfW,y);x.lineTo(vpx+halfW,y);
+      const nt=Math.min(1,(i+1-phase)/STEPS);const np=Math.pow(nt,2.0);const ny=vpy+(H-vpy)*np;const nhw=W*0.62*np;
+      x.lineTo(vpx+nhw,ny);x.lineTo(vpx-nhw,ny);x.closePath();x.fill();
+      // riser (front face) darker
+      x.fillStyle=`hsl(${hue},28%,${shade*0.55}%)`;
+      x.fillRect(vpx-halfW,y-stepH*0.18,halfW*2,Math.max(1,stepH*0.18));
+      // side rails
+      x.strokeStyle=`hsla(${hue},40%,70%,.25)`;x.lineWidth=2;
+      x.beginPath();x.moveTo(vpx-halfW,y);x.lineTo(vpx-nhw,ny);x.moveTo(vpx+halfW,y);x.lineTo(vpx+nhw,ny);x.stroke();
+    }
+    // ambient vignette
+    const g=x.createRadialGradient(vpx,vpy,40,vpx,H,H);g.addColorStop(0,"rgba(80,40,120,.10)");g.addColorStop(1,"rgba(0,0,0,.7)");
+    x.fillStyle=g;x.fillRect(0,0,W,H);
+    // a little wanderer dot that never gets closer to the bottom
+    x.fillStyle="#ffd23f";x.beginPath();x.arc(vpx,H*0.72,6,0,7);x.fill();
+  }
+  frame();
+  </script>
+</body></html>

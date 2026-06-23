@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Magnifying Burn</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden}
+  #stage{position:relative;height:100%;overflow:auto}
+  #burns{position:fixed;inset:0;pointer-events:none;z-index:6}
+  #lens{position:fixed;z-index:8;width:200px;height:200px;border-radius:50%;pointer-events:none;
+    overflow:hidden;border:6px solid #2a2d36;box-shadow:0 0 0 2px #00000080,0 12px 40px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.35);
+    transform:translate(-50%,-50%);opacity:0;transition:opacity .2s}
+  #lensInner{position:absolute;left:0;top:0;transform-origin:0 0}
+  #charge{position:fixed;z-index:9;width:60px;height:60px;transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+  #reset{position:fixed;left:16px;bottom:16px;z-index:10;font-family:Segoe UI,sans-serif}
+</style></head>
+<body>
+  <div id="stage"><div class="wrap" id="content"></div></div>
+  <div id="lens"><div id="lensInner"></div></div>
+  <svg id="charge" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="none" stroke="#ffb000" stroke-width="5"
+    stroke-dasharray="163" stroke-dashoffset="163" id="ring" transform="rotate(-90 30 30)"/></svg>
+  <canvas id="burns"></canvas>
+  <button class="btn" id="reset" style="background:#444">Extinguish &amp; reset</button>
+  <div class="hint">Hold the <b>magnifier</b> still over text — focus it long enough and it burns a hole through the page</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#caa024",brand:"THE FOCAL POINT",
+    title:"Look Too Closely and You Will Burn Right Through the Meaning",blocks:11,
+    lede:"A lens concentrates more than light. Linger on any sentence and watch it ignite under your attention."});
+  // duplicate content into lens for true magnification
+  const inner=document.getElementById("lensInner");
+  inner.innerHTML='<div class="wrap" style="width:'+document.querySelector("#content").offsetWidth+'px">'+document.getElementById("content").innerHTML+'</div>';
+  const ZOOM=2.0, LR=100;
+  const lens=document.getElementById("lens");
+
+  const burns=document.getElementById("burns"), g=burns.getContext("2d");
+  let W,H,DPR=Math.min(devicePixelRatio,2);
+  function size(){W=innerWidth;H=innerHeight;burns.width=W*DPR;burns.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0);}
+  size();addEventListener("resize",size);
+
+  let mx=-999,my=-999,still=0,lastMove=performance.now(),charge=0;
+  let holes=[], embers=[];
+  const stage=document.getElementById("stage");
+  addEventListener("mousemove",e=>{
+    const dx=e.clientX-mx, dy=e.clientY-my; mx=e.clientX; my=e.clientY;
+    if(Math.hypot(dx,dy)>3){ charge=Math.max(0,charge-0.18); }
+    lens.style.opacity="1"; lens.style.left=mx+"px"; lens.style.top=my+"px";
+    // position the magnified clone so the point under cursor is centered in the lens
+    const sx=stage.scrollLeft, sy=stage.scrollTop;
+    inner.style.transform=`scale(${ZOOM})`;
+    inner.style.left=(-(mx+sx)*ZOOM + LR)+"px";
+    inner.style.top =(-(my+sy)*ZOOM + LR)+"px";
+  });
+  addEventListener("mouseleave",()=>{lens.style.opacity="0";});
+
+  const ring=document.getElementById("ring"), chargeEl=document.getElementById("charge");
+  function burnAt(x,y){
+    holes.push({x,y,r:6,max:30+Math.random()*40,grow:0.8});
+    document.querySelector(".hint").style.display="none";
+  }
+  function frame(){
+    // build focus charge when still
+    charge=Math.min(1,charge+0.012);
+    chargeEl.style.opacity = (mx>0 && charge<1)?"0.95":"0";
+    chargeEl.style.left=mx+"px"; chargeEl.style.top=(my-130)+"px";
+    ring.setAttribute("stroke-dashoffset", String(163*(1-charge)));
+    if(charge>=1 && mx>0){ burnAt(mx,my); charge=0; }
+
+    g.clearRect(0,0,W,H);
+    holes.forEach(h=>{
+      if(h.r<h.max) h.r+=h.grow;
+      // charred hole
+      const grd=g.createRadialGradient(h.x,h.y,0,h.x,h.y,h.r);
+      grd.addColorStop(0,"#000");grd.addColorStop(.72,"#0a0a0a");
+      grd.addColorStop(.86,"#3a1402");grd.addColorStop(.95,"#ff5a1e");grd.addColorStop(1,"rgba(255,120,30,0)");
+      g.fillStyle=grd; g.beginPath(); g.arc(h.x,h.y,h.r,0,7); g.fill();
+      // ember sparks at the rim
+      if(Math.random()<0.5){const a=Math.random()*7;embers.push({x:h.x+Math.cos(a)*h.r,y:h.y+Math.sin(a)*h.r,vx:Math.cos(a)*.6,vy:Math.sin(a)*.6-1,life:1});}
+    });
+    g.save(); g.globalCompositeOperation="lighter";
+    embers=embers.filter(e=>e.life>0);
+    embers.forEach(e=>{e.x+=e.vx;e.y+=e.vy;e.vy+=0.02;e.life-=0.03;
+      g.fillStyle=`rgba(255,${150+Math.random()*80|0},40,${e.life})`;g.beginPath();g.arc(e.x,e.y,1.6,0,7);g.fill();});
+    g.restore();
+    requestAnimationFrame(frame);
+  }
+  frame();
+  document.getElementById("reset").addEventListener("click",()=>{holes=[];embers=[];});
+  </script>
+</body></html>

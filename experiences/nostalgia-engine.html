@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Nostalgia Engine</title>
+<style>
+  html,body{margin:0;height:100%;overflow:auto}
+  #bar{position:fixed;left:0;top:0;right:0;z-index:20;background:#111;color:#eee;font-family:"Segoe UI",sans-serif;
+    padding:10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+  #bar input{width:90px;padding:6px;border-radius:6px;border:1px solid #444;background:#222;color:#fff}
+  #bar button{padding:6px 14px;border:0;border-radius:6px;background:#5af;color:#012;font-weight:700;cursor:pointer}
+  #era{font-weight:800;color:#5af}
+  #page{margin-top:54px}
+</style></head>
+<body>
+  <div id="bar">
+    🕰️ Born in <input id="year" type="number" value="1996" min="1991" max="2024">
+    <button id="go">Render the web of that year</button>
+    <span id="era"></span>
+  </div>
+  <div id="page"></div>
+  <script src="_shared.js"></script>
+  <script>
+  const page=document.getElementById("page");
+  function build(){MX.fakeArticle(page,{title:"A Homepage From the Year You Were Born",
+    brand:"NOSTALGIA ENGINE",blocks:7,lede:"Type the year you were born. The CSS will rewrite itself to match how the web actually looked back then."});}
+  build();
+  function styleFor(y){
+    const s=document.getElementById("eraStyle")||document.createElement("style");s.id="eraStyle";document.head.appendChild(s);
+    let css="",era="";
+    if(y<=1996){era="1994–1996 · Mosaic / early Netscape";
+      css=`body{background:#c0c0c0;font-family:'Times New Roman',serif;color:#000}
+        #page{max-width:none}.wrap{max-width:none;padding:8px}
+        h1.title{font-size:28px;color:#000;background:#fff;border:3px ridge #888;text-align:center;padding:6px}
+        nav.site{background:#000080;color:#ff0;border:2px outset #fff;display:block}
+        nav.site a{color:#ff0;text-decoration:underline}
+        a,.btn{color:#00f}.btn{background:#c0c0c0;border:2px outset #fff;color:#000;border-radius:0;font-family:'Times New Roman'}
+        blockquote,.card{border:2px inset #888;background:#fff;border-radius:0}
+        p{font-size:15px}`;}
+    else if(y<=2001){era="1998–2001 · GeoCities / table layout";
+      css=`body{background:#000 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="1.5" fill="%23004"/></svg>');color:#0f0;font-family:Verdana,sans-serif}
+        .wrap{background:#000;border:4px ridge #f0f;padding:14px}
+        h1.title{color:#ff0;font-family:Impact;text-shadow:2px 2px #f0f;text-align:center;animation:rb 3s infinite}
+        @keyframes rb{0%{color:#f00}33%{color:#0f0}66%{color:#0ff}100%{color:#ff0}}
+        nav.site{border-bottom:3px dashed #0ff}nav.site a{color:#0ff}
+        a,.btn{color:#ff0}.btn{background:#f0f;border:3px outset #fff;color:#000;border-radius:0}
+        p{color:#0f0}blockquote,.card{background:#001;border:2px solid #0ff;color:#0f0;border-radius:0}`;}
+    else if(y<=2007){era="2003–2007 · Web 2.0 glossy gradients";
+      css=`body{background:linear-gradient(#eef6ff,#cfe2ff);font-family:'Lucida Grande','Segoe UI',sans-serif;color:#234}
+        .wrap{background:#fff;border:1px solid #bcd;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:16px}
+        h1.title{color:#2a6fb0;text-shadow:0 1px 0 #fff;font-size:40px}
+        nav.site{background:linear-gradient(#5a9fd4,#357abf);border-radius:10px;padding:10px;border:0}
+        nav.site a{color:#fff}.btn{background:linear-gradient(#7bbf4a,#5a9e2f);border-radius:18px;border:1px solid #4a8020;box-shadow:inset 0 1px 0 #cfe}
+        .card,blockquote{border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}`;}
+    else if(y<=2012){era="2008–2012 · skeuomorphism";
+      css=`body{background:#3b3b3b url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="6"><rect width="6" height="6" fill="%23444"/><rect width="3" height="3" fill="%233a3a3a"/></svg>');font-family:'Helvetica Neue',sans-serif;color:#222}
+        .wrap{background:#ece8df;border-radius:8px;box-shadow:inset 0 1px 0 #fff,0 8px 24px rgba(0,0,0,.5);margin-top:16px;border:1px solid #b8b2a4}
+        h1.title{color:#3a3a3a;text-shadow:0 1px 0 #fff}
+        nav.site{background:linear-gradient(#6b6b6b,#4a4a4a);border-radius:6px;padding:10px;border:1px solid #333}nav.site a{color:#fff;text-shadow:0 -1px 0 #000}
+        .btn{background:linear-gradient(#fdfdfd,#cfcfcf);color:#333;border:1px solid #999;border-radius:6px;box-shadow:inset 0 1px 0 #fff}`;}
+    else if(y<=2016){era="2013–2016 · flat design";
+      css=`body{background:#ecf0f1;font-family:'Helvetica Neue',Arial,sans-serif;color:#2c3e50}
+        .wrap{background:#fff;margin-top:10px}h1.title{color:#2c3e50;font-weight:300;font-size:46px}
+        nav.site{background:#1abc9c;border:0;padding:14px}nav.site a{color:#fff;font-weight:300}
+        .btn{background:#3498db;border-radius:3px;border:0}.card,blockquote{border:0;background:#f7f9fa;border-radius:3px}`;}
+    else{era=(y)+" · modern minimal";
+      css=`body{background:#fff;font-family:'Segoe UI',system-ui,sans-serif;color:#111}
+        .wrap{margin-top:10px}h1.title{font-weight:800;font-size:54px;letter-spacing:-1px}
+        nav.site{border:0;border-bottom:1px solid #eee}.btn{background:#111;border-radius:10px}.card{border:1px solid #eee;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.05)}`;}
+    s.textContent=css;document.getElementById("era").textContent=era;
+  }
+  document.getElementById("go").onclick=()=>styleFor(+document.getElementById("year").value);
+  styleFor(1996);
+  </script>
+</body></html>

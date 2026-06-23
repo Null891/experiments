@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Sand Clock DOM</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%;overflow:hidden;background:#1c160d}
+  #content{position:relative;z-index:2}
+  .wrap{height:100vh;overflow:hidden}
+  #sand{position:fixed;inset:0;z-index:5;pointer-events:none}
+  .w.gone{visibility:hidden}
+  #timer{position:fixed;left:16px;top:14px;z-index:9;font-family:"Segoe UI",sans-serif;font-weight:700;
+    color:#7a5a2a;background:rgba(255,255,255,.6);padding:6px 12px;border-radius:8px}
+  #done{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;display:none;text-align:center;
+    font-family:"Segoe UI",sans-serif;color:#e9cf9a}
+</style></head>
+<body>
+  <div class="wrap" id="content"></div>
+  <canvas id="sand"></canvas>
+  <div id="timer">⏳ the page is dissolving…</div>
+  <div id="done"><h2>It returned to sand.</h2><div>Every word fell to the floor of the hourglass.</div>
+    <a class="btn" id="rb" href="#" style="margin-top:14px">Turn the hourglass over</a></div>
+  <div class="hint">Read quickly — each word turns to <b>sand</b> and falls. You can't get it back.</div>
+  <script src="_shared.js"></script>
+  <script>
+  MX.fakeArticle(document.getElementById("content"),{accent:"#b5852e",brand:"THE HOURGLASS GAZETTE",
+    title:"Everything You Are Reading Is Already Falling",blocks:9,
+    lede:"This article has a half-life. The sand does not care whether you have finished the sentence."});
+  // wrap every word in a span
+  (function wrapWords(root){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const texts=[]; let n; while(n=walker.nextNode()){ if(n.nodeValue.trim()) texts.push(n); }
+    texts.forEach(t=>{
+      const frag=document.createDocumentFragment();
+      t.nodeValue.split(/(\s+)/).forEach(part=>{
+        if(/\s+/.test(part)||part===""){ frag.appendChild(document.createTextNode(part)); }
+        else{ const s=document.createElement("span"); s.className="w"; s.textContent=part; frag.appendChild(s); }
+      });
+      t.parentNode.replaceChild(frag,t);
+    });
+  })(document.getElementById("content"));
+
+  const cv=document.getElementById("sand"), ctx=cv.getContext("2d");
+  let W,H,DPR=Math.min(devicePixelRatio,2);
+  function size(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  size(); addEventListener("resize",size);
+
+  let grains=[]; const SAND=["#e8c87a","#d9b25f","#c89a4a","#b5852e","#efd89a"];
+  // pile heightmap
+  const COLS=Math.ceil(innerWidth/4); let pile=new Float32Array(COLS).fill(0);
+  function colAt(x){return Math.max(0,Math.min(COLS-1,Math.floor(x/4)));}
+
+  function dissolve(span){
+    if(span.classList.contains("gone"))return;
+    const r=span.getBoundingClientRect();
+    if(r.width<1){span.classList.add("gone");return;}
+    const count=Math.max(6, Math.floor(r.width*r.height/14));
+    const col=getComputedStyle(span).color;
+    for(let i=0;i<count;i++){
+      grains.push({x:r.left+Math.random()*r.width, y:r.top+Math.random()*r.height,
+        vx:(Math.random()-.5)*0.4, vy:Math.random()*0.6,
+        r:0.8+Math.random()*1.6, c:SAND[(Math.random()*SAND.length)|0], settled:false, life:1});
+    }
+    span.classList.add("gone");
+  }
+
+  // schedule dissolves top-to-bottom over time
+  const words=[...document.querySelectorAll(".w")];
+  let idx=0;
+  setTimeout(()=>{ const iv=setInterval(()=>{
+    // dissolve a few per tick, accelerating
+    let batch=1+Math.floor(idx/40);
+    for(let b=0;b<batch && idx<words.length;b++){ dissolve(words[idx++]); }
+    if(idx>=words.length){ clearInterval(iv); document.getElementById("timer").textContent="⏳ empty";
+      setTimeout(()=>document.getElementById("done").style.display="block",1800); }
+  },120); }, 2600);
+
+  function frame(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of grains){
+      if(!p.settled){
+        p.vy+=0.05; p.x+=p.vx; p.y+=p.vy;
+        const c=colAt(p.x); const floorY=H-pile[c];
+        if(p.y>=floorY){
+          p.y=floorY; p.settled=true;
+          // build the pile, let it slump to neighbors
+          pile[c]+=p.r*1.3;
+          if(c>0 && pile[c]-pile[c-1]>10) {pile[c]-=4;pile[c-1]+=4;}
+          if(c<COLS-1 && pile[c]-pile[c+1]>10){pile[c]-=4;pile[c+1]+=4;}
+        }
+      } else { p.life-=0.0016; }
+    }
+    grains=grains.filter(p=>p.life>0);
+    for(const p of grains){ ctx.globalAlpha=p.life; ctx.fillStyle=p.c; ctx.fillRect(p.x,p.y,p.r,p.r); }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(frame);
+  }
+  frame();
+  document.getElementById("rb").addEventListener("click",e=>{e.preventDefault();location.reload();});
+  </script>
+</body></html>

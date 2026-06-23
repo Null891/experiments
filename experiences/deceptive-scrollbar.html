@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Deceptive Scrollbar</title>
+<link rel="stylesheet" href="_shared.css">
+<style>
+  html,body{height:100%}
+  #scroller{height:100%;overflow-y:scroll}
+  #fakebar{position:fixed;right:3px;top:0;bottom:0;width:10px;z-index:9}
+  #fakebar #thumb{position:absolute;right:0;width:10px;background:#9aa;border-radius:6px;transition:none}
+  #depth{position:fixed;left:16px;bottom:14px;z-index:9;font-family:"Segoe UI",sans-serif;font-size:12px;color:#999;background:rgba(255,255,255,.7);padding:6px 10px;border-radius:8px}
+</style></head>
+<body>
+  <div id="scroller"><div class="wrap" id="content"></div></div>
+  <div id="depth">depth: <span id="d">0</span>px · the bottom keeps moving</div>
+  <div class="hint">Try to reach the bottom. The page generates <b>endless</b> filler about its own headline as you approach.</div>
+  <script src="_shared.js"></script>
+  <script>
+  const topic="The Bottom of This Page";
+  MX.fakeArticle(document.getElementById("content"),{accent:"#2a8",brand:"THE INFINITE SCROLL",
+    title:"There Is No Bottom of the Page",blocks:6,
+    lede:"You are welcome to try to reach the end of this article. We will keep writing it, forever, faster than you can scroll."});
+  const sc=document.getElementById("scroller"),content=document.getElementById("content");
+  const SUBJECTS=["the footer","the end","the conclusion","the final paragraph","the last word","this very sentence","the abyss below","tomorrow's filler","the next section about "+topic];
+  function genBlock(){
+    const h=document.createElement("h2");h.textContent="More About "+SUBJECTS[(Math.random()*SUBJECTS.length)|0];
+    const p1=document.createElement("p");p1.textContent="Scholars have long debated whether "+SUBJECTS[(Math.random()*SUBJECTS.length)|0]+" truly exists. "+MX.para(4);
+    const p2=document.createElement("p");p2.textContent="In conclusion, and to summarize the summary of the conclusion: "+MX.para(3);
+    content.appendChild(h);content.appendChild(p1);content.appendChild(p2);
+  }
+  for(let i=0;i<3;i++)genBlock();
+  sc.addEventListener("scroll",()=>{
+    document.getElementById("d").textContent=Math.round(sc.scrollTop);
+    // when within 1200px of bottom, append more (and slightly more each time)
+    if(sc.scrollHeight-sc.scrollTop-sc.clientHeight<1400){
+      genBlock(); if(Math.random()<0.4)genBlock();
+    }
+  });
+  // honest little tell: the more you scroll, the faster it grows
+  </script>
+</body></html>

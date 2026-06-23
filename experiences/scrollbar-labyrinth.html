@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Scrollbar Labyrinth</title>
+<style>
+  html,body{margin:0;height:100%;background:#0a0d14;font-family:"Segoe UI",sans-serif;color:#bcd}
+  #scroll{position:fixed;inset:0;overflow:scroll}
+  #world{position:relative}
+  #player{position:fixed;left:50%;top:50%;width:16px;height:16px;background:#ffd23f;border-radius:50%;
+    transform:translate(-50%,-50%);z-index:5;box-shadow:0 0 14px #ffd23f}
+  #hud{position:fixed;left:16px;top:14px;z-index:6;font-weight:700;background:rgba(8,10,16,.6);padding:8px 12px;border-radius:8px}
+  #win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9;background:rgba(5,8,14,.9);text-align:center}
+</style></head>
+<body>
+  <div id="scroll"><canvas id="world"></canvas></div>
+  <div id="player"></div>
+  <div id="hud">🌀 No mouse-move navigation.<br>Balance the <b>two scrollbars</b> to steer the dot to the 🟢 exit.</div>
+  <div id="win"><h1>🟢 You found the exit.</h1><p>Navigated a maze using nothing but scrollbars. Respect.</p></div>
+  <script>
+  // maze grid
+  const CELL=60,COLS=40,ROWS=40;
+  const cv=document.getElementById("world"),x=cv.getContext("2d");
+  cv.width=COLS*CELL;cv.height=ROWS*CELL;
+  // generate maze via recursive backtracker
+  const walls=Array.from({length:ROWS},()=>Array.from({length:COLS},()=>({n:true,e:true,s:true,w:true,v:false})));
+  (function gen(){const st=[[0,0]];walls[0][0].v=true;
+    while(st.length){const[cx,cy]=st[st.length-1];const ns=[];
+      if(cy>0&&!walls[cy-1][cx].v)ns.push([0,-1,"n","s"]);
+      if(cx<COLS-1&&!walls[cy][cx+1].v)ns.push([1,0,"e","w"]);
+      if(cy<ROWS-1&&!walls[cy+1][cx].v)ns.push([0,1,"s","n"]);
+      if(cx>0&&!walls[cy][cx-1].v)ns.push([-1,0,"w","e"]);
+      if(!ns.length){st.pop();continue;}
+      const[dx,dy,a,b]=ns[(Math.random()*ns.length)|0];walls[cy][cx][a]=false;walls[cy+dy][cx+dx][b]=false;walls[cy+dy][cx+dx].v=true;st.push([cx+dx,cy+dy]);}
+  })();
+  // draw
+  x.fillStyle="#0c1018";x.fillRect(0,0,cv.width,cv.height);
+  x.strokeStyle="#2a6cff";x.lineWidth=6;x.lineCap="round";
+  for(let cy=0;cy<ROWS;cy++)for(let cx=0;cx<COLS;cx++){const c=walls[cy][cx];const px=cx*CELL,py=cy*CELL;
+    x.beginPath();if(c.n){x.moveTo(px,py);x.lineTo(px+CELL,py);}if(c.w){x.moveTo(px,py);x.lineTo(px,py+CELL);}
+    if(c.e&&cx===COLS-1){x.moveTo(px+CELL,py);x.lineTo(px+CELL,py+CELL);}if(c.s&&cy===ROWS-1){x.moveTo(px,py+CELL);x.lineTo(px+CELL,py+CELL);}x.stroke();}
+  // start + exit
+  const exit={cx:COLS-1,cy:ROWS-1};
+  x.fillStyle="#1dd1a1";x.beginPath();x.arc(exit.cx*CELL+CELL/2,exit.cy*CELL+CELL/2,16,0,7);x.fill();
+  // build wall hit-test from rendered pixels
+  const img=x.getImageData(0,0,cv.width,cv.height).data;
+  function isWall(wx,wy){if(wx<0||wy<0||wx>=cv.width||wy>=cv.height)return true;const i=((wy|0)*cv.width+(wx|0))*4;
+    return img[i+2]>180&&img[i]<120;} // bluish wall
+
+  const scroll=document.getElementById("scroll");
+  // place start scroll so dot (viewport center) is at cell (0,0)
+  let lastL=CELL/2-innerWidth/2, lastT=CELL/2-innerHeight/2;
+  scroll.scrollLeft=lastL;scroll.scrollTop=lastT;
+  let won=false;
+  scroll.addEventListener("scroll",()=>{
+    if(won)return;
+    const cxw=scroll.scrollLeft+innerWidth/2, cyw=scroll.scrollTop+innerHeight/2;
+    if(isWall(cxw,cyw)){scroll.scrollLeft=lastL;scroll.scrollTop=lastT;return;}
+    lastL=scroll.scrollLeft;lastT=scroll.scrollTop;
+    if(Math.hypot(cxw-(exit.cx*CELL+CELL/2),cyw-(exit.cy*CELL+CELL/2))<24){won=true;document.getElementById("win").style.display="flex";}
+  });
+  </script>
+</body></html>

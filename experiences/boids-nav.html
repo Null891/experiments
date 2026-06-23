@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>The Boids Navigation</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#071018;font-family:"Segoe UI",sans-serif;color:#cfe}
+  #c{position:fixed;inset:0}
+  .link{position:fixed;z-index:5;padding:9px 16px;border-radius:30px;background:rgba(10,20,30,.7);
+    border:1px solid #2af;color:#cfefff;font-weight:700;cursor:pointer;user-select:none;white-space:nowrap;
+    box-shadow:0 0 14px rgba(40,170,255,.3);transition:transform .08s,background .15s}
+  .link:hover{background:#2af;color:#021}
+  .hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;font-size:13px;background:rgba(10,12,20,.7);padding:8px 14px;border-radius:30px}
+  .hint b{background:#fff;color:#111;border-radius:4px;padding:0 6px}
+  #toast{position:fixed;left:50%;top:30px;transform:translateX(-50%);z-index:7;background:#2af;color:#021;padding:9px 18px;border-radius:30px;opacity:0;transition:opacity .3s;font-weight:700}
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="toast"></div>
+  <div class="hint">The menu links <b>flock</b> like birds. Chase one down and <b>catch</b> it to navigate.</div>
+  <script>
+  const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
+  const LINKS=["Home","Essays","The Lab","Gallery","About","Archive","Contact","Manifesto"];
+  let mx=W/2,my=H/2;addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;});
+  const boids=LINKS.map((name,i)=>{const el=document.createElement("div");el.className="link";el.textContent=name;document.body.appendChild(el);
+    el.addEventListener("click",()=>{const t=document.getElementById("toast");t.textContent="Caught “"+name+"” ✓";t.style.opacity="1";setTimeout(()=>t.style.opacity="0",1500);el.style.background="#7af0ff";});
+    return {name,el,x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,w:0,h:0};});
+
+  function step(){
+    x.clearRect(0,0,W,H);
+    for(const b of boids){
+      let ax=0,ay=0,cx=0,cy=0,sx=0,sy=0,n=0;
+      for(const o of boids){if(o===b)continue;const dx=o.x-b.x,dy=o.y-b.y,d=Math.hypot(dx,dy);
+        if(d<160){cx+=o.x;cy+=o.y;ax+=o.vx;ay+=o.vy;n++; if(d<70){sx-=dx/d;sy-=dy/d;}}}
+      if(n){cx/=n;cy/=n;ax/=n;ay/=n;
+        b.vx+=(cx-b.x)*0.0006+(ax-b.vx)*0.04+sx*0.6;
+        b.vy+=(cy-b.y)*0.0006+(ay-b.vy)*0.04+sy*0.6;}
+      // flee cursor (that's the whole joke)
+      const fx=b.x-mx,fy=b.y-my,fd=Math.hypot(fx,fy);
+      if(fd<200){const f=(200-fd)/200*1.8;b.vx+=fx/fd*f;b.vy+=fy/fd*f;}
+      // gentle center pull
+      b.vx+=(W/2-b.x)*0.0002;b.vy+=(H/2-b.y)*0.0002;
+      const sp=Math.hypot(b.vx,b.vy),max=5.5;if(sp>max){b.vx=b.vx/sp*max;b.vy=b.vy/sp*max;}
+      b.x+=b.vx;b.y+=b.vy;
+      if(b.x<0||b.x>W)b.vx*=-1;if(b.y<0||b.y>H)b.vy*=-1;
+      b.x=Math.max(0,Math.min(W,b.x));b.y=Math.max(0,Math.min(H,b.y));
+      b.el.style.left=(b.x-b.el.offsetWidth/2)+"px";b.el.style.top=(b.y-b.el.offsetHeight/2)+"px";
+      b.el.style.transform=`rotate(${Math.atan2(b.vy,b.vx)*0.15}rad)`;
+      // trail
+      x.strokeStyle="rgba(60,180,255,.25)";x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x-b.vx*3,b.y-b.vy*3);x.stroke();
+    }
+    requestAnimationFrame(step);
+  }
+  step();
+  </script>
+</body></html>
