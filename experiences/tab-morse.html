@@ -18,6 +18,7 @@
     <div id="decoded"></div>
     <div id="ctrl"><button id="speed">faster</button><button id="restart">restart</button></div>
   </div>
+  <script src="_sound.js"></script>
   <script>
   const TEXT="THE WHOLE PAGE IS IN THE TAB TITLE. YOU ARE READING WITH YOUR EYES CLOSED. WELCOME TO THE DARK BROADCAST.";
   const M={A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",K:"-.-",L:".-..",M:"--",N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",W:".--",X:"-..-",Y:"-.--",Z:"--..","0":"-----","1":".----","2":"..---","3":"...--","4":"....-","5":".....","6":"-....","7":"--...","8":"---..","9":"----.",".":".-.-.-",",":"--..--","?":"..--..","'":".----."," ":"/"};
@@ -33,6 +34,7 @@
     if(i>=seq.length){i=0;decoded="";dec.textContent="";}
     const s=seq[i];
     beacon.classList.toggle("on",s.on);
+    if(s.on && window.MXA) MXA.tone(640, Math.max(0.04, s.dur/1000*0.9), "sine", 0.16);
     document.title=s.on?(s.sym==="."?"●  transmitting":"▬  transmitting"):"·  ···";
     now.textContent=s.on?s.sym:"";
     if(s.ch&&s.ch!==revealedCh){ /* reveal char when its code starts */ }

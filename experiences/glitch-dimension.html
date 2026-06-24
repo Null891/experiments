@@ -15,6 +15,7 @@
   <canvas id="gl"></canvas>
   <div class="hint">Somewhere on this page is a single <b>hidden pixel</b>. Find it. Click it. (it's greenish)</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   MX.fakeArticle(document.getElementById("content"),{accent:"#19d36a",brand:"THE STABLE TIMES",
     title:"This Is a Perfectly Normal, Well-Behaved Webpage",blocks:12,
@@ -62,7 +63,7 @@
 
   /* ---------- DOM corruption ---------- */
   let corrupt=false;
-  px.addEventListener("click",()=>{ corrupt=true; document.body.classList.add("corrupt"); px.style.display="none";
+  px.addEventListener("click",()=>{ corrupt=true; document.body.classList.add("corrupt"); px.style.display="none"; if(window.MXA){MXA.glitch();MXA.drone(42,0.05,"sawtooth");}
     document.querySelector(".hint").innerHTML="You let it in. <b>It's loose in the DOM now.</b>";
     corruptLoop(); });
   const CH="!<>-_\\/[]{}—=+*^?#01ÆØ▓▒░█☠";
@@ -70,6 +71,7 @@
   const originals=[...content.querySelectorAll("p,h1,h2,a,span,div,.btn")].map(e=>({e,t:e.textContent}));
   function corruptLoop(){
     if(!corrupt)return;
+    if(window.MXA && Math.random()<0.12) MXA.glitch();
     // jitter + RGB split
     const jx=(Math.random()-.5)*14, jy=(Math.random()-.5)*8;
     content.style.transform=`translate(${jx}px,${jy}px)`;

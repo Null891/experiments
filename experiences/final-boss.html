@@ -21,8 +21,10 @@
        <small>Move with the mouse. You auto-fire. Dodge everything. Survive the patterns.</small></p>
     <button class="btn" id="start">FIGHT</button>
   </div>
+  <script src="_sound.js"></script>
   <script>
   const cv=document.getElementById("c"),x=cv.getContext("2d");
+  let shake=0;
   let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
   const me={x:innerWidth/2,y:innerHeight*0.8,r:7,alive:true};
   addEventListener("mousemove",e=>{me.x=e.clientX;me.y=e.clientY;});
@@ -51,6 +53,7 @@
 
   function frame(){
     requestAnimationFrame(frame);
+    cv.style.transform = shake>0.3 ? `translate(${(Math.random()-.5)*shake}px,${(Math.random()-.5)*shake}px)` : "none"; shake*=0.86;
     x.fillStyle="rgba(5,3,10,.35)";x.fillRect(0,0,W,H);
     // starfield
     if(!running) return drawStars();
@@ -66,10 +69,10 @@
     x.fillStyle="#fff";x.font="22px Segoe UI";x.textAlign="center";x.fillText("</>",0,8);
     x.restore();
     // my auto fire
-    if(me.alive&&++fireT%5===0){myb.push({x:me.x,y:me.y-8,vy:-11});myb.push({x:me.x-6,y:me.y-4,vy:-11});myb.push({x:me.x+6,y:me.y-4,vy:-11});}
+    if(me.alive&&++fireT%5===0){myb.push({x:me.x,y:me.y-8,vy:-11});myb.push({x:me.x-6,y:me.y-4,vy:-11});myb.push({x:me.x+6,y:me.y-4,vy:-11});if(window.MXA&&fireT%10===0)MXA.laser();}
     myb=myb.filter(b=>b.y>-20);
     myb.forEach(b=>{b.y+=b.vy;x.fillStyle="#8df0ff";x.fillRect(b.x-2,b.y-8,4,12);
-      if(Math.hypot(b.x-boss.x,b.y-boss.y)<boss.r){boss.hp-=6;b.y=-99;spark(b.x,b.y,"#ff8a3b",4);}});
+      if(Math.hypot(b.x-boss.x,b.y-boss.y)<boss.r){boss.hp-=6;b.y=-99;spark(b.x,b.y,"#ff8a3b",4);if(window.MXA)MXA.tone(280,0.04,"square",0.04);shake=Math.max(shake,3);}});
     boss.hp=Math.max(0,boss.hp);
     document.getElementById("hpfill").style.width=(boss.hp/boss.max*100)+"%";
     phase=boss.hp<boss.max*0.66?(boss.hp<boss.max*0.33?2:1):0;
@@ -90,9 +93,9 @@
   }
   let stars=[];for(let i=0;i<120;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,z:Math.random()});
   function drawStars(){x.fillStyle="#000";stars.forEach(s=>{s.y+=s.z*0.6;if(s.y>H)s.y=0;x.fillStyle=`rgba(180,200,255,${s.z})`;x.fillRect(s.x,s.y,s.z*2,s.z*2);});}
-  function hit(){ me.alive=false; spark(me.x,me.y,"#8df0ff",40);
+  function hit(){ me.alive=false; spark(me.x,me.y,"#8df0ff",40); if(window.MXA)MXA.explosion(); shake=22;
     setTimeout(()=>{ if(!running)return; over("YOU WERE DELETED","The boss compiled you out of existence.","RESPAWN & FIGHT AGAIN"); },700); running=false; }
-  function win(){ running=false; spark(boss.x,boss.y,"#ff8a3b",120);
+  function win(){ running=false; spark(boss.x,boss.y,"#ff8a3b",120); if(window.MXA)MXA.explosion(); shake=30;
     setTimeout(()=>over("BOSS DEFEATED ⭐","The résumé is yours. (download unlocked)","Download résumé.pdf",true),600); }
   function over(title,sub,btn,won){
     const o=document.getElementById("overlay");o.style.display="flex";

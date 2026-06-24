@@ -1,0 +1,602 @@
+[
+ {
+  "id": 0,
+  "name": "Tearable DOM",
+  "blurb": "Click and drag to rip the page in half and reveal the raw HTML underneath.",
+  "color": "#e8e2d0",
+  "page": "tearable-dom.html",
+  "finale": false
+ },
+ {
+  "id": 1,
+  "name": "Glass Shatter",
+  "blurb": "Click a link and the page shatters into hundreds of glass shards that fly at you, then reassemble.",
+  "color": "#9fd6ff",
+  "page": "glass-shatter.html",
+  "finale": false
+ },
+ {
+  "id": 2,
+  "name": "The Looming Shadow",
+  "blurb": "A massive shadow sweeps across, inverting colors and revealing hidden text where it touches.",
+  "color": "#5a4b8a",
+  "page": "looming-shadow.html",
+  "finale": false
+ },
+ {
+  "id": 3,
+  "name": "Burning Paper",
+  "blurb": "Scroll too fast and digital friction ignites the page, burning text into drifting ash.",
+  "color": "#ff7a2f",
+  "page": "burning-paper.html",
+  "finale": false
+ },
+ {
+  "id": 4,
+  "name": "Magnifying Burn",
+  "blurb": "Hover too long and a magnifying glass scorches a black hole through the page.",
+  "color": "#ffd23f",
+  "page": "magnifying-burn.html",
+  "finale": false
+ },
+ {
+  "id": 5,
+  "name": "Inflatable Divs",
+  "blurb": "Click elements to pump them full of air until they bulge, distort, and POP.",
+  "color": "#ff5d8f",
+  "page": "inflatable-divs.html",
+  "finale": false
+ },
+ {
+  "id": 6,
+  "name": "Sand Clock DOM",
+  "blurb": "Text turns to sand and falls to the floor. Read it before it dissolves.",
+  "color": "#d9b382",
+  "page": "sand-clock.html",
+  "finale": false
+ },
+ {
+  "id": 7,
+  "name": "The Zipper",
+  "blurb": "The page is sealed shut. Drag a giant 3D zipper down to open the content.",
+  "color": "#c0c6cf",
+  "page": "zipper.html",
+  "finale": false
+ },
+ {
+  "id": 8,
+  "name": "The Breathing Site",
+  "blurb": "Every margin and padding inhales and exhales — the whole layout breathes like lungs.",
+  "color": "#1dd1a1",
+  "page": "breathing-site.html",
+  "finale": false
+ },
+ {
+  "id": 9,
+  "name": "The De-constructor",
+  "blurb": "A button un-writes the HTML, tag by tag, into a blank white void.",
+  "color": "#dfe6ee",
+  "page": "deconstructor.html",
+  "finale": false
+ },
+ {
+  "id": 10,
+  "name": "Marquee Singularity",
+  "blurb": "It's 1998 and every element is a <marquee>, scrolling in all directions at once.",
+  "color": "#ffe14d",
+  "page": "marquee-singularity.html",
+  "finale": false
+ },
+ {
+  "id": 11,
+  "name": "The Glitch Dimension",
+  "blurb": "Find the hidden pixel to corrupt the DOM into glitch-art horror with a live WebGL shader.",
+  "color": "#ff2e6e",
+  "page": "glitch-dimension.html",
+  "finale": false
+ },
+ {
+  "id": 12,
+  "name": "4D Hypercube UI",
+  "blurb": "Navigation is a projected 4D tesseract — rotate through the fourth dimension to reach links.",
+  "color": "#a06bff",
+  "page": "hypercube.html",
+  "finale": false
+ },
+ {
+  "id": 13,
+  "name": "Code City 3D",
+  "blurb": "The source maps into a 3D metropolis — functions are towers, variables are cars.",
+  "color": "#62b0ff",
+  "page": "code-city.html",
+  "finale": false
+ },
+ {
+  "id": 14,
+  "name": "Internet Traffic Simulator",
+  "blurb": "A WebGL globe of live attacks; your cursor is the defense shield.",
+  "color": "#4ff0d0",
+  "page": "traffic-sim.html",
+  "finale": false
+ },
+ {
+  "id": 15,
+  "name": "The Final Boss Website",
+  "blurb": "Fight the developer's avatar in a bullet-hell to download the résumé.",
+  "color": "#ff3b3b",
+  "page": "final-boss.html",
+  "finale": false
+ },
+ {
+  "id": 16,
+  "name": "Generative Conspiracy Map",
+  "blurb": "Name any two things; a 3D node graph 'proves' how they're secretly connected.",
+  "color": "#a06bff",
+  "page": "generative-conspiracy.html",
+  "finale": false
+ },
+ {
+  "id": 17,
+  "name": "Browser Fingerprint Art",
+  "blurb": "A 3D sculpture generated from your exact browser fingerprint — unique to your machine.",
+  "color": "#7af0ff",
+  "page": "fingerprint-art.html",
+  "finale": false
+ },
+ {
+  "id": 18,
+  "name": "Dream Interpreter DOM",
+  "blurb": "Type a dream; a WebGL surrealist sky is painted from it and locked as the background.",
+  "color": "#c5a3ff",
+  "page": "dream-interpreter.html",
+  "finale": false
+ },
+ {
+  "id": 19,
+  "name": "The Traceroute Highway",
+  "blurb": "A 3D racer whose track is built from the server hops your packet took to get here.",
+  "color": "#ff7ab8",
+  "page": "traceroute-highway.html",
+  "finale": false
+ },
+ {
+  "id": 20,
+  "name": "Div-Eating Snake",
+  "blurb": "Play Snake over the article — eat the paragraphs to reveal hidden images beneath.",
+  "color": "#178a5a",
+  "page": "div-snake.html",
+  "finale": false
+ },
+ {
+  "id": 21,
+  "name": "Breakout DOM",
+  "blurb": "Classic Breakout, but the bricks are this site's real content containers.",
+  "color": "#7af0ff",
+  "page": "breakout-dom.html",
+  "finale": false
+ },
+ {
+  "id": 22,
+  "name": "Z-Index Ocean",
+  "blurb": "Ten thousand stacked layers hide the content. Dig down through the z-index to find it.",
+  "color": "#54a0ff",
+  "page": "zindex-ocean.html",
+  "finale": false
+ },
+ {
+  "id": 23,
+  "name": "DOM Jenga",
+  "blurb": "A tower of CSS blocks. Pull them out — but collapse the layout and your session ends.",
+  "color": "#d9a441",
+  "page": "dom-jenga.html",
+  "finale": false
+ },
+ {
+  "id": 24,
+  "name": "Scrollbar Labyrinth",
+  "blurb": "No mouse navigation — solve a maze purely by balancing the two scrollbars.",
+  "color": "#ffd23f",
+  "page": "scrollbar-labyrinth.html",
+  "finale": false
+ },
+ {
+  "id": 25,
+  "name": "The Physics Volume Slider",
+  "blurb": "A volume knob on a pendulum. Throw it and hit Save the instant it swings past your target.",
+  "color": "#2bd9a0",
+  "page": "physics-volume.html",
+  "finale": false
+ },
+ {
+  "id": 26,
+  "name": "Terms of Service Speedrun",
+  "blurb": "The Accept button falls down a bottomless pit of legalese. Race it before it vanishes.",
+  "color": "#1aaa77",
+  "page": "tos-speedrun.html",
+  "finale": false
+ },
+ {
+  "id": 27,
+  "name": "The Sniper UI",
+  "blurb": "The Checkout button is tiny and teleports twice a second. Snipe it through a scope.",
+  "color": "#ff2e2e",
+  "page": "sniper-ui.html",
+  "finale": false
+ },
+ {
+  "id": 28,
+  "name": "The Boids Navigation",
+  "blurb": "The menu links flock like birds. Chase one down and catch it to navigate.",
+  "color": "#48b0ff",
+  "page": "boids-nav.html",
+  "finale": false
+ },
+ {
+  "id": 29,
+  "name": "Pathfinding Unsubscribe",
+  "blurb": "The Unsubscribe button uses pathfinding to flee your cursor and hide behind elements.",
+  "color": "#ee3322",
+  "page": "pathfinding-unsubscribe.html",
+  "finale": false
+ },
+ {
+  "id": 30,
+  "name": "Magnifying Glass UI",
+  "blurb": "The whole article is rendered at 1px. Your cursor is a giant loupe — move it to read.",
+  "color": "#cfd4dd",
+  "page": "magnify-1px.html",
+  "finale": false
+ },
+ {
+  "id": 31,
+  "name": "The HTTP Status Dungeon",
+  "blurb": "A dungeon you navigate by editing the URL's status code — 403 locks doors, 418 heals.",
+  "color": "#5ad1ff",
+  "page": "http-dungeon.html",
+  "finale": false
+ },
+ {
+  "id": 32,
+  "name": "Console.log() Adventure",
+  "blurb": "A text RPG with a blank screen — played entirely by typing functions into the DevTools console.",
+  "color": "#33ff77",
+  "page": "console-adventure.html",
+  "finale": false
+ },
+ {
+  "id": 33,
+  "name": "The Honeypot Simulator",
+  "blurb": "Visualize live brute-force bot attacks as a tower-defense game and stop the breach.",
+  "color": "#ffd23f",
+  "page": "honeypot-defense.html",
+  "finale": false
+ },
+ {
+  "id": 34,
+  "name": "The RSA Puzzle Box",
+  "blurb": "Crack a deliberately tiny RSA key by hand — factor it, find d, decrypt the secret.",
+  "color": "#7af0ff",
+  "page": "rsa-puzzle.html",
+  "finale": false
+ },
+ {
+  "id": 35,
+  "name": "The Mirror Site",
+  "blurb": "The copy rewrites itself to perfectly match the tone of wherever you came from.",
+  "color": "#7ad7c1",
+  "page": "mirror-site.html",
+  "finale": false
+ },
+ {
+  "id": 36,
+  "name": "Auto-Translating Chaos",
+  "blurb": "Routed through translation 50 times — poetic, broken, surreal English. Slide to degrade.",
+  "color": "#9ad29a",
+  "page": "auto-translate.html",
+  "finale": false
+ },
+ {
+  "id": 37,
+  "name": "Nostalgia Engine",
+  "blurb": "The CSS rewrites itself to look exactly like the web of the year you were born.",
+  "color": "#c5a3ff",
+  "page": "nostalgia-engine.html",
+  "finale": false
+ },
+ {
+  "id": 38,
+  "name": "Reverse Search",
+  "blurb": "The site searches YOU — weirder and weirder yes/no questions until it guesses what you want.",
+  "color": "#ffb86b",
+  "page": "reverse-search.html",
+  "finale": false
+ },
+ {
+  "id": 39,
+  "name": "The Deceptive Scrollbar",
+  "blurb": "Reaching the bottom expands the page forever with endless generated filler.",
+  "color": "#6be3a2",
+  "page": "deceptive-scrollbar.html",
+  "finale": false
+ },
+ {
+  "id": 40,
+  "name": "Read-Mind Predictor",
+  "blurb": "A model predicts your next click from cursor velocity and pre-highlights the button.",
+  "color": "#ff6fb5",
+  "page": "read-mind.html",
+  "finale": false
+ },
+ {
+  "id": 41,
+  "name": "Time-Travel History",
+  "blurb": "A slider that morphs the UI backward and forward through decades of web design.",
+  "color": "#9fb6c9",
+  "page": "time-travel.html",
+  "finale": false
+ },
+ {
+  "id": 42,
+  "name": "The API Blackhole",
+  "blurb": "Random data from many feeds, woven by an engine into one cohesive surreal story.",
+  "color": "#ff8a5c",
+  "page": "api-blackhole.html",
+  "finale": false
+ },
+ {
+  "id": 43,
+  "name": "The 1ms Latency Challenge",
+  "blurb": "Watch a packet race 100 servers around a world map to load a single image.",
+  "color": "#5ad1ff",
+  "page": "latency-challenge.html",
+  "finale": false
+ },
+ {
+  "id": 44,
+  "name": "Dark Web Crawler",
+  "blurb": "Abstract, censored art generated from scraped (simulated) hidden-service titles.",
+  "color": "#0c6",
+  "page": "dark-web.html",
+  "finale": false
+ },
+ {
+  "id": 45,
+  "name": "The Quantum Randomizer",
+  "blurb": "A quantum RNG totally randomizes every CSS class on each load.",
+  "color": "#ff5fa2",
+  "page": "quantum-randomizer.html",
+  "finale": false
+ },
+ {
+  "id": 46,
+  "name": "The Turing Test Chatbot",
+  "blurb": "The whole site is a chat. Convince the AI you're human to get the URL.",
+  "color": "#7affd1",
+  "page": "turing-test.html",
+  "finale": false
+ },
+ {
+  "id": 47,
+  "name": "The Hallucinating Encyclopedia",
+  "blurb": "Impossibly detailed fake history — generated citations, fake maps, photos of people who never existed.",
+  "color": "#3366cc",
+  "page": "hallucinating-wikipedia.html",
+  "finale": false
+ },
+ {
+  "id": 48,
+  "name": "Subreddit Simulator Live",
+  "blurb": "A live, fully fake Reddit thread where bots argue with each other in real time.",
+  "color": "#ff4500",
+  "page": "subreddit-sim.html",
+  "finale": false
+ },
+ {
+  "id": 49,
+  "name": "The Sentient Database",
+  "blurb": "Query a SQL database that replies with snarky, judgmental comments about your JOINs.",
+  "color": "#7ee787",
+  "page": "sentient-database.html",
+  "finale": false
+ },
+ {
+  "id": 50,
+  "name": "The Polyglot Server",
+  "blurb": "The same endpoint, handled by a different backend language on every request.",
+  "color": "#00add8",
+  "page": "polyglot-server.html",
+  "finale": false
+ },
+ {
+  "id": 51,
+  "name": "Prompt-Injected E-Commerce",
+  "blurb": "No Add-to-Cart buttons — you must negotiate or trick the AI chatbot into adding items.",
+  "color": "#2a6cff",
+  "page": "prompt-shop.html",
+  "finale": false
+ },
+ {
+  "id": 52,
+  "name": "The Evolving Dialect",
+  "blurb": "An AI reinvents the site's language every few seconds. Use context to follow the nav.",
+  "color": "#7af0ff",
+  "page": "evolving-dialect.html",
+  "finale": false
+ },
+ {
+  "id": 53,
+  "name": "The Schizophrenic Nav",
+  "blurb": "The navbar argues with itself; links rename and try to talk you out of clicking them.",
+  "color": "#ff9d4d",
+  "page": "schizo-nav.html",
+  "finale": false
+ },
+ {
+  "id": 54,
+  "name": "The Sentient 404",
+  "blurb": "A 404 that refuses to let you leave, looping links and begging you to stay.",
+  "color": "#ff4444",
+  "page": "sentient-404.html",
+  "finale": false
+ },
+ {
+  "id": 55,
+  "name": "Desktop Simulator",
+  "blurb": "A messy desktop. The About page is buried four folders deep inside taxes_2014.",
+  "color": "#5b8dd9",
+  "page": "desktop-sim.html",
+  "finale": false
+ },
+ {
+  "id": 56,
+  "name": "The Endless Staircase",
+  "blurb": "A parallax illusion of descending an infinite staircase to a footer you'll never reach.",
+  "color": "#9a8c7a",
+  "page": "endless-staircase.html",
+  "finale": false
+ },
+ {
+  "id": 57,
+  "name": "The Blackout",
+  "blurb": "Total dark. Move fast to spark a digital fire bright enough to read the content.",
+  "color": "#ffcf5a",
+  "page": "blackout.html",
+  "finale": false
+ },
+ {
+  "id": 58,
+  "name": "The Cult Initiation",
+  "blurb": "Read the manifesto. Scroll-speed is tracked to be sure you actually read it before unlocking.",
+  "color": "#c43b5a",
+  "page": "cult-initiation.html",
+  "finale": false
+ },
+ {
+  "id": 59,
+  "name": "The Blockchain Labyrinth",
+  "blurb": "A maze whose walls are re-minted from the hash of each freshly generated block.",
+  "color": "#b9a14a",
+  "page": "blockchain-labyrinth.html",
+  "finale": false
+ },
+ {
+  "id": 60,
+  "name": "The Roulette Checkout",
+  "blurb": "Hit Buy and a wheel spins — black confirms the purchase, red empties your cart and bans you.",
+  "color": "#e2b13b",
+  "page": "roulette-checkout.html",
+  "finale": false
+ },
+ {
+  "id": 61,
+  "name": "The Impatient Shopping Cart",
+  "blurb": "Every 10 seconds you dawdle at checkout, the cart quietly removes one of your items.",
+  "color": "#c0392b",
+  "page": "impatient-cart.html",
+  "finale": false
+ },
+ {
+  "id": 62,
+  "name": "The Judging AI Cursor",
+  "blurb": "A second, AI-controlled cursor follows yours and criticizes your erratic mouse control.",
+  "color": "#a06bff",
+  "page": "judging-cursor.html",
+  "finale": false
+ },
+ {
+  "id": 63,
+  "name": "Procedural GeoCities",
+  "blurb": "An infinite maze of horrific 1998-style pages — flaming skulls, marquees, visitor counters.",
+  "color": "#00ff66",
+  "page": "procedural-geocities.html",
+  "finale": false
+ },
+ {
+  "id": 64,
+  "name": "The Code Execution Sandbox",
+  "blurb": "A terminal with root on a disposable Linux that violently resets itself every 10 minutes.",
+  "color": "#33ff88",
+  "page": "code-sandbox.html",
+  "finale": false
+ },
+ {
+  "id": 65,
+  "name": "The Server Temperature UI",
+  "blurb": "The background color is tied to the (real) CPU temperature. Stress it and watch it glow red.",
+  "color": "#ff6b4a",
+  "page": "server-temp.html",
+  "finale": false
+ },
+ {
+  "id": 66,
+  "name": "The 7-Month Mars Ping",
+  "blurb": "A chat that simulates the speed-of-light delay to Mars — every message takes 14 minutes.",
+  "color": "#c1502e",
+  "page": "mars-ping.html",
+  "finale": false
+ },
+ {
+  "id": 67,
+  "name": "The Bribe",
+  "blurb": "Throttled to 56k dial-up — solve a proof-of-work puzzle to 'pay' for full bandwidth.",
+  "color": "#e2a23b",
+  "page": "bribe-dialup.html",
+  "finale": false
+ },
+ {
+  "id": 68,
+  "name": "Password Is the Page",
+  "blurb": "The password to continue is this entire article. Copy it perfectly into one box.",
+  "color": "#2a6cff",
+  "page": "password-is-page.html",
+  "finale": false
+ },
+ {
+  "id": 69,
+  "name": "Tab Title Morse Code",
+  "blurb": "The page is black; the whole article is flashed in Morse code in the browser tab title.",
+  "color": "#33ff77",
+  "page": "tab-morse.html",
+  "finale": false
+ },
+ {
+  "id": 70,
+  "name": "The Decoy UI",
+  "blurb": "The screen is a fake JPEG of a site. The real, interactive site is a 2px speck in the corner.",
+  "color": "#ff2e6e",
+  "page": "decoy-ui.html",
+  "finale": false
+ },
+ {
+  "id": 71,
+  "name": "The Base64 URL",
+  "blurb": "No server at all — the entire HTML/CSS/JS is Base64-encoded directly into the URL.",
+  "color": "#27c93f",
+  "page": "base64-url.html",
+  "finale": false
+ },
+ {
+  "id": 72,
+  "name": "The Password Typo Requirement",
+  "blurb": "Your password must contain exactly one uppercase, one number, one hieroglyph, and one misspelling.",
+  "color": "#5af",
+  "page": "password-typo.html",
+  "finale": false
+ },
+ {
+  "id": 73,
+  "name": "Steganography Gallery",
+  "blurb": "A normal photo portfolio — but each image hides a ZIP, revealed in the hex inspector.",
+  "color": "#5af",
+  "page": "steganography-gallery.html",
+  "finale": false
+ },
+ {
+  "id": 74,
+  "name": "The Architect's Chamber",
+  "blurb": "The last door. Beyond the experiments lies the one who built them all. Every room you opened is waiting here.",
+  "color": "#ffd86b",
+  "page": "finale.html",
+  "finale": true
+ }
+]

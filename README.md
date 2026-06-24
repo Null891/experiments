@@ -1,15 +1,21 @@
 # 🏛 THE MANSION
 
-A walkable **3D building** — a modern, minimalist, Italian-inflected gallery (travertine floors,
-plaster walls, walnut accents, brushed brass, daylight windows) — where you physically walk through
-doorways into **real enclosed rooms**, and each room's display opens a different *experimental
-website*: pages that tear in half, shatter into glass, burn into ash, dissolve into sand, inflate
-until they pop, fight back, flee from your cursor, race you around the world, judge your mouse
-control, or fold through the fourth dimension.
+A walkable **3D building** — a blended **Roman / Victorian** mansion (veined marble floors, fluted
+columns, round arches, coffered ceilings, crystal chandeliers, damask walls, velvet drapery, urns,
+frescoes) — where you physically walk (WASD, real wall collision) through doorways into **enclosed
+rooms**, and each room's display opens a different *experimental website*: pages that tear in half,
+shatter into glass, burn into ash, dissolve into sand, inflate until they pop, fight back, flee from
+your cursor, race you around the world, judge your mouse control, or fold through the fourth dimension.
 
 **75 rooms in total:** 74 hand-built experiences off the galleries + a grand cinematic finale,
-*The Architect's Chamber*. Movement has real wall collision; the rooms are actual architecture
-(image-based lighting via Three's `RoomEnvironment`, ACES tone-mapping, subtle bloom).
+*The Architect's Chamber*. Interacting with a room **cinematically flies you in** before the site
+takes over. Rendering uses image-based lighting (`RoomEnvironment`), ACES tone-mapping, custom GLSL
+(marble, GLSL dust motes, waving velvet drapery) and a post stack of **SSAO + Bloom + Depth-of-Field
++ SMAA**. Many sites now have **procedural Web-Audio sound** (`experiences/_sound.js`) — a distinct
+sonic signature each (glass shatter, fire crackle, paper rip, zipper teeth, real Morse beeps, …).
+
+There are two builds: the runnable vanilla-Three.js mansion (this folder) and a Next.js +
+React-Three-Fiber + Rapier scaffold in [`mansion-next/`](mansion-next/) (the framework-stack version).
 
 ![rooms](https://img.shields.io/badge/rooms-75-7af0ff) ![built with](https://img.shields.io/badge/three.js-r160-a06bff) ![deps](https://img.shields.io/badge/runtime%20deps-0-1dd1a1)
 
@@ -62,7 +68,9 @@ js/hub.js             the building: procedural floor plan, PBR materials, IBL, w
                       collision, gallery navigation, minimap, directory, finale chamber
 experiences/          one self-contained HTML file per room
   _shared.css/.js     helpers + the fake-article generator the effects decorate
+  _sound.js           zero-asset procedural Web-Audio toolkit (MXA) for per-site sound
   finale.html         The Architect's Chamber (the ending)
+mansion-next/         Next.js + R3F + Rapier + postprocessing + Zustand scaffold (see its README)
 test/smoke.js         headless smoke test — loads every page, fails on JS errors
 ```
 

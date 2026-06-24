@@ -13,6 +13,7 @@
   <div id="done"><a class="btn" id="rb" href="#">It's open. Step through →</a></div>
   <div class="hint">Grab the <b>zipper pull</b> in the middle and drag it <b>down</b> to open the page</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   const cv=document.getElementById("c"), ctx=cv.getContext("2d");
   let W,H,DPR=Math.min(devicePixelRatio,2);
@@ -100,7 +101,10 @@
   function near(e){ const y=e.touches?e.touches[0].clientY:e.clientY; const x=e.touches?e.touches[0].clientX:e.clientX;
     return Math.abs(x-CX())<60 && Math.abs(y-zipY)<70; }
   cv.addEventListener("mousedown",e=>{ if(near(e)){dragging=true;cv.classList.add("drag");} });
-  addEventListener("mousemove",e=>{ if(dragging){ zipY=Math.max(46,Math.min(H-8,e.clientY)); } });
+  let _lastTooth=0;
+  addEventListener("mousemove",e=>{ if(dragging){ const ny=Math.max(46,Math.min(H-8,e.clientY));
+    if(window.MXA && Math.abs(ny-zipY)>10 && Date.now()-_lastTooth>28){ MXA.tone(620+Math.random()*120,0.02,"square",0.06); _lastTooth=Date.now(); }
+    zipY=ny; } });
   addEventListener("mouseup",()=>{dragging=false;cv.classList.remove("drag");});
   cv.addEventListener("touchstart",e=>{ if(near(e)){dragging=true;e.preventDefault();} },{passive:false});
   addEventListener("touchmove",e=>{ if(dragging){ zipY=Math.max(46,Math.min(H-8,e.touches[0].clientY)); e.preventDefault(); } },{passive:false});

@@ -24,6 +24,7 @@
     <a class="btn" id="rb" href="#" style="margin-top:14px">Buy again →</a></div>
   <div class="hint">The <b>Checkout</b> button is 1px-ish and teleports twice a second. Snipe it through the scope.</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   MX.fakeArticle(document.getElementById("content"),{accent:"#ff2e2e",brand:"PRECISION CHECKOUT",
     title:"Complete Your Purchase by Hitting a Moving Target",blocks:8,
@@ -36,8 +37,9 @@
   teleport();setInterval(teleport,500);
   addEventListener("mousedown",()=>{
     shots++;document.getElementById("s").textContent=shots;
+    if(window.MXA){MXA.tone(180,0.04,"square",0.18);MXA.noise(0.12,0.12,1800,"lowpass");}
     const r=buy.getBoundingClientRect();
-    if(Math.hypot(r.left+7-mx,r.top+7-my)<16){ document.getElementById("win").style.display="block"; }
+    if(Math.hypot(r.left+7-mx,r.top+7-my)<16){ document.getElementById("win").style.display="block"; if(window.MXA)MXA.chime(1046); }
     else { // muzzle flash
       const f=document.createElement("div");f.style.cssText=`position:fixed;left:${mx}px;top:${my}px;width:30px;height:30px;background:radial-gradient(#fff,transparent 70%);transform:translate(-50%,-50%);z-index:25;pointer-events:none`;
       document.body.appendChild(f);setTimeout(()=>f.remove(),80);

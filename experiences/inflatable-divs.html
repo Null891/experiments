@@ -18,6 +18,7 @@
   <div id="pump">💨 click anything to pump it full of air · pop them all</div>
   <div class="hint">Click elements to <b>inflate</b> them — keep clicking until they <b>POP</b></div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   MX.fakeArticle(document.getElementById("content"),{accent:"#ff2e78",brand:"THE OVERINFLATED OBSERVER",
     title:"Hot Air Is the Only Renewable Resource We Have Left",blocks:8,
@@ -33,6 +34,7 @@
   let bits=[];
 
   function pop(el){
+    if(window.MXA)MXA.pop();
     const r=el.getBoundingClientRect();
     const col=getComputedStyle(el).backgroundColor;
     const c=(col&&col!=="rgba(0, 0, 0, 0)")?col:"#ff2e78";
@@ -47,7 +49,7 @@
   }
   document.getElementById("content").addEventListener("click",e=>{
     const el=e.target.closest(".inflatable"); if(!el||el.style.display==="none")return;
-    let air=(+el.dataset.air)+1; el.dataset.air=air;
+    let air=(+el.dataset.air)+1; el.dataset.air=air; if(window.MXA)MXA.pump();
     const s=1+air*0.16, skew=Math.sin(air)*2;
     el.style.transform=`scale(${s}) skewX(${skew}deg)`;
     el.style.borderRadius=Math.min(50,air*8)+"px";

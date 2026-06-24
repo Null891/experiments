@@ -6,7 +6,7 @@
 <title>The Mansion — 75 unruly websites</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/hub.css" />
 <script type="importmap">
 { "imports": {
@@ -34,7 +34,7 @@
   </div>
 
   <div id="minimapWrap">
-    <div class="cap">the halls</div>
+    <div class="cap">Floor Plan</div>
     <canvas id="minimap" width="196" height="196"></canvas>
   </div>
 
@@ -61,22 +61,31 @@
   </div>
 
   <div id="splash">
-    <h1>THE MANSION</h1>
-    <div class="sub">75 doors · 75 unruly websites</div>
+    <div class="sub">A house of seventy-five impossible rooms</div>
+    <h1>THE&nbsp;MANSION</h1>
+    <div class="rule"></div>
+    <div class="motto">— Introite, nam et hic dii sunt —</div>
     <p>Behind each door, a website that behaves like nothing you've used before —
        pages that <b>tear</b>, <b>shatter</b>, <b>burn</b>, inflate, dissolve into sand, fight back,
-       race you, judge you, or fold through the <b>fourth dimension</b>. Walk the halls. Open everything.
-       The last door is waiting.</p>
+       race you, judge you, or fold through the <b>fourth dimension</b>. Walk the marble halls.
+       Open everything. The last door is waiting.</p>
     <div class="keys">
       <span><b>W A S D</b>Move</span><span><b>Mouse</b>Look</span>
-      <span><b>E / Click</b>Enter</span><span><b>Tab</b>Room list</span><span><b>Click map</b>Teleport</span>
+      <span><b>E / Click</b>Enter</span><span><b>Tab</b>Directory</span><span><b>Click map</b>Teleport</span>
     </div>
-    <button id="enterBtn">Enter the Mansion</button>
+    <button id="enterBtn" disabled><span class="spin"></span>Lighting the chandeliers…</button>
     <div id="loadnote">Best on a desktop with a big screen. Click the scene to capture your cursor.</div>
   </div>
 
   <div class="reveal" id="reveal"></div>
 
+  <script>
+    /* safety net: enable entry even if the module is slow */
+    addEventListener("load", () => setTimeout(() => {
+      const b = document.getElementById("enterBtn");
+      if (b && b.disabled) { b.disabled = false; b.classList.add("ready"); b.innerHTML = "Enter the Mansion"; }
+    }, 6000));
+  </script>
   <script src="js/registry.js"></script>
   <script type="module" src="js/hub.js"></script>
 </body>

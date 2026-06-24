@@ -15,13 +15,14 @@
   <canvas id="c"></canvas>
   <div id="toast"></div>
   <div class="hint">The menu links <b>flock</b> like birds. Chase one down and <b>catch</b> it to navigate.</div>
+  <script src="_sound.js"></script>
   <script>
   const cv=document.getElementById("c"),x=cv.getContext("2d");
   let W,H;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;}rs();addEventListener("resize",rs);
   const LINKS=["Home","Essays","The Lab","Gallery","About","Archive","Contact","Manifesto"];
   let mx=W/2,my=H/2;addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY;});
   const boids=LINKS.map((name,i)=>{const el=document.createElement("div");el.className="link";el.textContent=name;document.body.appendChild(el);
-    el.addEventListener("click",()=>{const t=document.getElementById("toast");t.textContent="Caught “"+name+"” ✓";t.style.opacity="1";setTimeout(()=>t.style.opacity="0",1500);el.style.background="#7af0ff";});
+    el.addEventListener("click",()=>{const t=document.getElementById("toast");t.textContent="Caught “"+name+"” ✓";t.style.opacity="1";setTimeout(()=>t.style.opacity="0",1500);el.style.background="#7af0ff";if(window.MXA)MXA.chime(660+i*40);});
     return {name,el,x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,w:0,h:0};});
 
   function step(){

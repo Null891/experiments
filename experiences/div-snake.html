@@ -15,6 +15,7 @@
   <div id="hud">🐍 Eaten: <span id="n">0</span> / <span id="t">0</span> paragraphs</div>
   <div class="hint">Use <b>arrow keys</b> / <b>WASD</b>. Steer the snake to <b>eat the paragraphs</b> and reveal what's underneath.</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   MX.fakeArticle(document.getElementById("content"),{accent:"#178a5a",brand:"THE SERPENT TIMES",
     title:"There Are Pictures Hidden Beneath This Text. Eat It to Find Them.",blocks:12,
@@ -54,7 +55,7 @@
     if(grow>0)grow--;else snake.pop();
     if(food && Math.abs(head.x-food.cx)<=1 && Math.abs(head.y-food.cy)<=1){
       food.el.dataset.eaten="1";food.el.style.opacity="0.0";food.el.querySelector(".reveal-img").style.opacity="1";
-      eaten++;document.getElementById("n").textContent=eaten;grow+=3;food=pickFood();
+      eaten++;document.getElementById("n").textContent=eaten;grow+=3;if(window.MXA)MXA.coin();food=pickFood();
       if(!food){ const d=document.createElement("div");d.style.cssText="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;text-align:center;font-family:Segoe UI,sans-serif;color:#178a5a;background:#fff;padding:24px;border-radius:14px";
         d.innerHTML="<h2>🐍 Whole page devoured.</h2><div>Every hidden image is revealed.</div><a class='btn' href='#' id='rb' style='margin-top:12px'>Slither onward →</a>";document.body.appendChild(d);
         document.getElementById("rb").onclick=ev=>{ev.preventDefault();MX.exitToMansion();};}

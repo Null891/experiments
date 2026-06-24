@@ -20,6 +20,7 @@
   <div id="hud">🧱 DOM JENGA<br>Blocks pulled: <span id="n">0</span><div id="stab"><div id="stabfill"></div></div></div>
   <div id="over"><h1 id="ot">💥 COLLAPSE</h1><p id="os">The layout fell apart. Session terminated.</p><button class="btn" id="rb">Rebuild the tower</button></div>
   <div class="hint">Click blocks to <b>pull them out</b> — but destabilize the tower too much and the whole site <b>collapses</b>.</div>
+  <script src="_sound.js"></script>
   <script>
   const stage=document.getElementById("stage");
   const LABELS=["<header>","<nav>","<main>","<article>","<section>","<aside>",".container",".row",".col",".card",
@@ -45,7 +46,7 @@
     blk.removed=true;el.style.transition="transform .4s,opacity .4s";
     el.style.transform="translateX("+(Math.random()<.5?-1:1)*300+"px) rotate("+(Math.random()*60-30)+"deg)";el.style.opacity="0";
     setTimeout(()=>el.style.display="none",400);
-    pulled++;document.getElementById("n").textContent=pulled;
+    pulled++;document.getElementById("n").textContent=pulled;if(window.MXA)MXA.tone(140+Math.random()*40,0.12,"sine",0.18);
     // instability: pulling low/middle blocks is riskier
     const below=blocks.filter(b=>!b.removed&&b.i<idx).length;
     instab+=8+ (idx<10?14:6) + Math.random()*10;
@@ -53,7 +54,7 @@
     if(instab>100||Math.random()<instab/260){collapse();}
   }
   function collapse(){
-    dead=true;
+    dead=true; if(window.MXA){MXA.explosion();for(let i=0;i<6;i++)setTimeout(()=>MXA.thud(),i*80);}
     blocks.filter(b=>!b.removed).forEach(b=>{b.vx=(Math.random()-.5)*14;b.vy=-Math.random()*6;b.vr=(Math.random()-.5)*0.4;});
     let t=0;(function fall(){t++;let any=false;
       blocks.forEach(b=>{if(b.removed||b.el.style.display==="none")return;any=true;b.vy+=0.6;

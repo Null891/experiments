@@ -1,0 +1,22 @@
+{
+  "name": "mansion-next",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Mansion — Next.js + React-Three-Fiber + Rapier framework-stack version of the 75-room mansion.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.160.0",
+    "@react-three/fiber": "^8.16.8",
+    "@react-three/drei": "^9.108.3",
+    "@react-three/postprocessing": "^2.16.2",
+    "@react-three/rapier": "^1.4.0",
+    "zustand": "^4.5.4"
+  }
+}

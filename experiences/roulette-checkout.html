@@ -24,6 +24,7 @@
   <div id="ban"><h1>⛔ BANNED</h1><p>The wheel landed on red. Your cart is empty and you are banned for 24 hours.</p>
     <p style="font-size:13px;opacity:.7">(time remaining: <span id="cd">23:59:58</span>)</p>
     <button id="appeal" style="margin-top:14px;background:#444;border:0;color:#fff;padding:10px 20px;border-radius:8px;cursor:pointer">Beg for an appeal</button></div>
+  <script src="_sound.js"></script>
   <script>
   const cv=document.getElementById("c"),x=cv.getContext("2d"),CX=140,CY=140,R=130;
   // 37 european-style pockets
@@ -48,15 +49,16 @@
     if(spinning)return;spinning=true;document.getElementById("buy").disabled=true;document.getElementById("res").textContent="";
     vel=0.4+Math.random()*0.25;
     (function anim(){ang+=vel;vel*=0.985;draw();
+      if(window.MXA && Math.random()<vel*7) MXA.tick();
       if(vel>0.002)requestAnimationFrame(anim);
       else{spinning=false;document.getElementById("buy").disabled=false;result(pocketAtTop());}})();
   }
   function result(n){
     const res=document.getElementById("res");
-    if(n===0){res.style.color="#3dff7a";res.textContent="🍀 GREEN 0 — It's free! The house made a mistake. Take it and run.";}
-    else if(reds.has(n)){res.style.color="#ff5252";res.textContent="🔴 RED "+n+" — Cart emptied. You are banned.";
+    if(n===0){res.style.color="#3dff7a";res.textContent="🍀 GREEN 0 — It's free! The house made a mistake. Take it and run.";if(window.MXA)MXA.coin();}
+    else if(reds.has(n)){res.style.color="#ff5252";res.textContent="🔴 RED "+n+" — Cart emptied. You are banned.";if(window.MXA){MXA.error();MXA.explosion();}
       setTimeout(()=>{document.getElementById("ban").style.display="flex";startCd();},800);}
-    else{res.style.color="#9fe";res.textContent="⚫ BLACK "+n+" — Purchase confirmed! Headphones are yours.";}
+    else{res.style.color="#9fe";res.textContent="⚫ BLACK "+n+" — Purchase confirmed! Headphones are yours.";if(window.MXA)MXA.chime(880);}
   }
   function startCd(){let s=24*3600-2;const el=document.getElementById("cd");
     setInterval(()=>{s--;const h=String(s/3600|0).padStart(2,"0"),m=String((s%3600)/60|0).padStart(2,"0"),ss=String(s%60).padStart(2,"0");el.textContent=`${h}:${m}:${ss}`;},1000);}

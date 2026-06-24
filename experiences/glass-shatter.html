@@ -9,6 +9,7 @@
   <canvas id="c"></canvas>
   <div class="hint">Click anywhere (a "link") to <b>shatter</b> the page — it reassembles into the next one</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   const cv=document.getElementById("c"), ctx=cv.getContext("2d");
   let W,H,DPR=Math.min(devicePixelRatio,2);
@@ -64,7 +65,7 @@
     ctx.restore();
     ctx.restore();
   }
-  function shatter(x,y){ if(state!=="idle")return; impact={x,y}; buildShards(x,y); pi++; buildPage(); /*next page hidden until reassemble*/ state="out"; t=0; }
+  function shatter(x,y){ if(state!=="idle")return; impact={x,y}; buildShards(x,y); pi++; buildPage(); /*next page hidden until reassemble*/ state="out"; t=0; if(window.MXA)MXA.shatter(); }
   cv.addEventListener("click",e=>shatter(e.clientX,e.clientY));
 
   function frame(){

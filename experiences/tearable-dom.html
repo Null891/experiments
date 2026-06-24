@@ -31,6 +31,7 @@
     <a class="btn" id="reset" href="#">Stitch it back together</a></div>
   <div class="hint">Drag the <b>✂</b> handle downward to tear the page in half</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
     const accent = "#c98b3a";
     // build identical article into both halves
@@ -69,7 +70,10 @@
       if(prog>0.92){ document.getElementById("done").style.display="block"; document.getElementById("grip").style.opacity=.2; }
       else document.getElementById("done").style.display="none";
     }
-    function setProg(p){ prog=Math.max(0,Math.min(1,p)); render(); }
+    let _lastRip=0;
+    function setProg(p){ const prev=prog; prog=Math.max(0,Math.min(1,p)); render();
+      if(window.MXA && prog>prev+0.004 && prog<0.99 && Date.now()-_lastRip>55){ MXA.rip(0.05+Math.random()*0.05); _lastRip=Date.now(); }
+      if(window.MXA && prev<0.92 && prog>=0.92){ MXA.rip(0.25); } }
     const grip=document.getElementById("grip");
     function down(e){dragging=true; startY=(e.touches?e.touches[0].clientY:e.clientY); startProg=prog; e.preventDefault();}
     function move(e){ if(!dragging)return; const y=(e.touches?e.touches[0].clientY:e.clientY);

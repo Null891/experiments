@@ -16,6 +16,7 @@
   <div id="hud">🧱 Blocks left: <span id="n">0</span></div>
   <div class="hint">Move the <b>paddle</b> with your mouse. The bricks are this site's real content. Smash it all.</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   MX.fakeArticle(document.getElementById("content"),{accent:"#7af0ff",brand:"THE DEMOLITION DAILY",
     title:"Knock Down Everything We Spent So Long Building",blocks:14,
@@ -29,7 +30,7 @@
   let paddle={x:innerWidth/2,w:130,h:14,y:innerHeight-30};
   addEventListener("mousemove",e=>{paddle.x=e.clientX;});
   let parts=[];
-  function smash(b){b.e.classList.add("brick-hit");for(let i=0;i<10;i++){const a=Math.random()*7;parts.push({x:ball.x,y:ball.y,vx:Math.cos(a)*4,vy:Math.sin(a)*4,life:1,c:getComputedStyle(b.e).color});}setTimeout(refresh,60);}
+  function smash(b){b.e.classList.add("brick-hit");if(window.MXA)MXA.tone(440+Math.random()*440,0.05,"square",0.08);for(let i=0;i<10;i++){const a=Math.random()*7;parts.push({x:ball.x,y:ball.y,vx:Math.cos(a)*4,vy:Math.sin(a)*4,life:1,c:getComputedStyle(b.e).color});}setTimeout(refresh,60);}
   function frame(){
     requestAnimationFrame(frame);
     x.clearRect(0,0,W,H);
@@ -39,7 +40,7 @@
     if(ball.y>H+40){ball.x=W/2;ball.y=H-80;ball.vx=4*(Math.random()<.5?1:-1);ball.vy=-5;}
     // paddle
     if(ball.y>paddle.y-ball.r&&ball.y<paddle.y+paddle.h&&Math.abs(ball.x-paddle.x)<paddle.w/2&&ball.vy>0){
-      ball.vy=-Math.abs(ball.vy);ball.vx+=(ball.x-paddle.x)/paddle.w*6;}
+      ball.vy=-Math.abs(ball.vy);ball.vx+=(ball.x-paddle.x)/paddle.w*6;if(window.MXA)MXA.tone(220,0.04,"sine",0.1);}
     // bricks
     for(const b of bricks){const r=b.r;
       if(ball.x>r.left&&ball.x<r.right&&ball.y>r.top&&ball.y<r.bottom){

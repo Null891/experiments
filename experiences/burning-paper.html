@@ -21,6 +21,7 @@
     <a class="btn" id="rb" href="#" style="margin-top:14px">Bring it back from the ashes</a></div>
   <div class="hint">Scroll <b>fast</b> and friction ignites the page from the bottom up</div>
   <script src="_shared.js"></script>
+  <script src="_sound.js"></script>
   <script>
   MX.fakeArticle(document.getElementById("content"),{accent:"#d62828",brand:"THE KINDLING REVIEW",
     title:"Read Gently, For Paper Remembers Heat",blocks:14,
@@ -40,7 +41,7 @@
     if(!burning){ heat=Math.min(1, heat + Math.max(0, v-0.9)*0.16); }
     if(heat>=1 && !burning) ignite();
   });
-  function ignite(){ burning=true; burnLine=H+30; document.querySelector(".hint").style.display="none"; }
+  function ignite(){ burning=true; burnLine=H+30; document.querySelector(".hint").style.display="none"; if(window.MXA)MXA.whoosh(); }
 
   function spawnEmber(x,y){ embers.push({x,y,vx:(Math.random()-.5)*0.6,vy:-(0.6+Math.random()*1.6),life:1,r:1+Math.random()*2.4,hue:20+Math.random()*30}); }
   function spawnAsh(x,y){ ash.push({x,y,vx:(Math.random()-.5)*0.5,vy:-(0.2+Math.random()*0.8),life:1,r:1+Math.random()*2,rot:Math.random()*6,vr:(Math.random()-.5)*.2}); }
@@ -51,6 +52,7 @@
     if(!burning){ heat=Math.max(0,heat-0.004); }
     else {
       burnLine-=2.2; // fire climbs
+      if(window.MXA && Math.random()<0.08) MXA.crackle(0.25);
       // mask the page: everything below burnLine is burned away
       const burnedPx=Math.max(0,H-burnLine);
       document.getElementById("content").parentElement.style.webkitMaskImage=
